@@ -1,6 +1,6 @@
 # Governance
 
-`cloud-itonami-6492` is an OSS open-business blueprint for other credit granting -- consumer/commercial lending outside deposit-taking banking (installment credit, pawnbroking, personal lending).
+`cloud-itonami-isic-6492` is an OSS open-business blueprint for other credit granting -- consumer/commercial lending outside deposit-taking banking (installment credit, pawnbroking, personal lending).
 Governance covers both the capability layer and the operator model.
 
 ## Maintainers

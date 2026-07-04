@@ -1,4 +1,4 @@
-{:itonami.blueprint/id "cloud-itonami-6492"
+{:itonami.blueprint/id "cloud-itonami-isic-6492"
  :itonami.blueprint/name "Other credit granting"
  :itonami.blueprint/isic-rev5 "6492"
  :itonami.blueprint/domain :finance/credit-granting

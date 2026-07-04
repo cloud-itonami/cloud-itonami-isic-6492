@@ -2,7 +2,7 @@
 
 ## Classification
 
-- Repository: `cloud-itonami-6492`
+- Repository: `cloud-itonami-isic-6492`
 - ISIC Rev.5: `6492`
 - Activity: other credit granting -- consumer/commercial lending outside deposit-taking banking (installment credit, pawnbroking, personal lending)
 - Social impact: financial inclusion, data sovereignty, transparent audit

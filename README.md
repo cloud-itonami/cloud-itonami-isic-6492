@@ -1,4 +1,4 @@
-# cloud-itonami-6492
+# cloud-itonami-isic-6492
 
 Open Business Blueprint for **ISIC Rev.5 6492**: Other credit granting.
 
