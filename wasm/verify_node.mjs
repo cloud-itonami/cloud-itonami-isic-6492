@@ -14,10 +14,17 @@
 // capabilities) -- simpler than the isic-6511 precedent this pattern is
 // copied from (underwriting_decision.wasm needs log-write + llm-infer).
 //
+// ABI: main is 0-arity; the three real i32 inputs (existing-debt,
+// requested-amount, annual-income -- all cents) are written into the
+// guest's exported linear memory at offsets 0/4/8 before calling main().
+// WASM linear memory is little-endian.
+//
 // Assumes the fixed sibling-checkout layout this monorepo's west manifest
 // always uses (orgs/<org>/<repo>) -- not a portable npm dependency.
 //
-// Run: node wasm/verify_node.mjs
+// Run: node wasm/verify_node.mjs <scenario>
+//   scenarios: approve | reject | zero-income
+//   or: node wasm/verify_node.mjs <existing-debt> <requested-amount> <annual-income>
 
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -26,7 +33,21 @@ import { hostCaps, actorHostImports } from '../../../kotoba-lang/wasm-webcompone
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-async function run() {
+const SCENARIOS = {
+  approve: [500000, 2000000, 6000000],
+  reject: [3000000, 3000000, 6000000],
+  'zero-income': [0, 0, 0],
+};
+
+function resolveInputs(argv) {
+  if (argv.length === 3) return argv.map(Number);
+  const scenario = argv[0];
+  if (SCENARIOS[scenario]) return SCENARIOS[scenario];
+  console.error(`usage: node ${path.basename(import.meta.url)} <scenario|existing-debt requested-amount annual-income>\nscenarios: ${Object.keys(SCENARIOS).join(', ')}`);
+  process.exit(64);
+}
+
+async function run(inputs) {
   const wasmBytes = await readFile(path.join(here, 'affordability.wasm'));
   const memoryBox = {};
   const importObject = { kotoba: actorHostImports([], hostCaps(), memoryBox) };
@@ -34,15 +55,20 @@ async function run() {
   const { instance } = await WebAssembly.instantiate(wasmBytes, importObject);
   memoryBox.memory = instance.exports.memory;
 
+  const view = new DataView(memoryBox.memory.buffer);
+  const [existingDebt, requestedAmount, annualIncome] = inputs;
+  view.setInt32(0, existingDebt, true);
+  view.setInt32(4, requestedAmount, true);
+  view.setInt32(8, annualIncome, true);
+
   const raw = instance.exports.main();
   const code = typeof raw === 'bigint' ? Number(raw) : raw;
 
   console.log(JSON.stringify({
+    input: { existingDebt, requestedAmount, annualIncome },
     result: code,
-    ok: code === 1,
+    affordable: code === 1,
   }, null, 2));
-
-  if (code !== 1) process.exit(1);
 }
 
-await run();
+await run(resolveInputs(process.argv.slice(2)));

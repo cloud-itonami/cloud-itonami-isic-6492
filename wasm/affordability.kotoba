@@ -5,9 +5,14 @@
     (<= (* 100 (+ existing-debt requested-amount)) (* 43 annual-income))
     0))
 
+;; ABI: `main` stays 0-arity (the compiler rejects a parameterized main --
+;; :main-arity, see kotoba-lang/kotoba's compile-wasm-expr) and reads its
+;; three real i32 inputs out of the exported linear memory instead, at fixed
+;; byte offsets a host writes into before calling main() (same convention as
+;; cloud-itonami-isic-6511's underwriting_decision.kotoba):
+;;   offset 0: existing-debt      (i32, smallest currency unit / cents)
+;;   offset 4: requested-amount   (i32, cents)
+;;   offset 8: annual-income      (i32, cents)
+;; Returns 1 (affordable) or 0 (not affordable / invalid income).
 (defn main []
-  (if (affordable? 500000 2000000 6000000)
-    (if (not (affordable? 3000000 3000000 6000000))
-      1
-      0)
-    0))
+  (affordable? (mem-i32-at 0 0) (mem-i32-at 0 4) (mem-i32-at 0 8)))

@@ -32,6 +32,25 @@ interpreter). The port therefore:
   `kotoba-card`/`kotoba-banking`'s own convention of representing amounts as
   plain integers in the smallest currency unit.
 
+## ABI — parameterized invocation
+
+`kotoba wasm emit` rejects any `main` with parameters (`:main-arity` — the
+compiler only ever exports a 0-arity `main`, see `compile-wasm-expr` in
+`kotoba-lang/kotoba/src/kotoba/runtime.clj`), so real inputs are passed
+through the guest's exported linear memory instead — the same convention
+`cloud-itonami-isic-6511`'s `underwriting_decision.kotoba` uses. A host
+writes three little-endian i32 values (cents) before calling `main()`:
+
+| offset | field              |
+|--------|--------------------|
+| 0      | `existing-debt`    |
+| 4      | `requested-amount` |
+| 8      | `annual-income`    |
+
+`main()` returns `1` (affordable) or `0` (not affordable, including
+non-positive income). Both offsets are well below `heap-base` (2048), so
+they never collide with anything the compiler itself places in memory.
+
 ## Rebuilding
 
 ```sh
@@ -47,26 +66,32 @@ bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/afford
 `actor-host.js` (plain Node.js, no JVM) — the same pattern
 ADR-2607072530 established for `cloud-itonami-isic-6511`, reused here since
 this module needs zero host imports (simpler: no `log-write`/`llm-infer`
-wiring, no scenario input bytes to write into linear memory).
+wiring).
 
-Run locally: `node wasm/verify_node.mjs` (needs the sibling checkout
-`orgs/kotoba-lang/wasm-webcomponent` present, per the west layout).
+Run locally:
+
+```sh
+node wasm/verify_node.mjs approve        # or: reject | zero-income
+node wasm/verify_node.mjs 500000 2000000 6000000   # raw existing-debt/requested-amount/annual-income
+```
+
+(needs the sibling checkout `orgs/kotoba-lang/wasm-webcomponent` present,
+per the west layout).
 
 **Deployed and verified on a real murakumo fleet node (`asher`)**,
 2026-07-07: transferred the compiled `.wasm` + `wasm-webcomponent/src/`
-(21 files, 232K) to `/tmp` over `rsync`, ran `node wasm/verify_node.mjs`
-there, got the identical `{"result": 1, "ok": true}` as the local run, then
-removed the transferred files (Node.js itself was already present on the
-fleet from the isic-6511 PoC and was left in place, per that ADR's
-precedent — not reinstalled or removed here).
+(21 files, 232K) to `/tmp` over `rsync`, ran all three scenarios there with
+`node wasm/verify_node.mjs <scenario>`, got results identical to the local
+run for each, then removed the transferred files (Node.js itself was
+already present on the fleet from the isic-6511 PoC and was left in place,
+per that ADR's precedent — not reinstalled or removed here).
 
 ## Follow-ups
 
-- `main` is 0-arity with two scenarios hardcoded in (an approve case and a
-  reject case, self-checking that both are judged correctly) — there is no
-  parameterized-invocation ABI yet for a host to pass real applicant numbers
-  in. That's real product work, out of scope here.
 - This module requests zero host imports (pure arithmetic) — it does not
   exercise the `actor:host` capability-grant path at all. That's still only
   proven by `kotoba-lang/kototama`'s own sha256/gen-keypair fixtures and
   ADR-2607072530's `llm-infer` capability.
+- No wire transport (HTTP/XRPC/etc.) puts a host in front of this ABI yet —
+  it's callable from a Clojure or Node.js process directly, not over a
+  network. That's real product work, out of scope here.
