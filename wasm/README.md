@@ -60,31 +60,42 @@ bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/afford
   --output ../../cloud-itonami/cloud-itonami-isic-6492/wasm/affordability.wasm --json
 ```
 
-## Fleet deployment (Node.js / `wasm-webcomponent`)
+## Fleet deployment (nbb / ClojureScript-on-Node / `wasm-webcomponent`)
 
-`verify_node.mjs` hosts `affordability.wasm` via `kotoba-lang/wasm-webcomponent`'s
-`actor-host.js` (plain Node.js, no JVM) — the same pattern
-ADR-2607072530 established for `cloud-itonami-isic-6511`, reused here since
-this module needs zero host imports (simpler: no `log-write`/`llm-infer`
-wiring).
+`verify_node.cljs` hosts `affordability.wasm` via `kotoba-lang/wasm-webcomponent`'s
+`actor-host.js` (plain Node.js, no JVM, run through `nbb` — ClojureScript
+without a build step). This started as a plain `.mjs` script; per this
+monorepo's `kotoba wasm > clojurewasm > cljs > nbb > jvm` runtime priority
+(root CLAUDE.md), it's `.cljs`/`nbb` instead of raw JavaScript everywhere
+else in the codebase does the same kind of lightweight Node scripting
+(`svgraph/bin/svgraph.cljs`, `kototama/web/generate.cljs`, etc.). Reuses
+the pattern ADR-2607072530 established for `cloud-itonami-isic-6511`,
+simpler here since this module needs zero host imports (no
+`log-write`/`llm-infer` wiring).
+
+`nbb` is a local devDependency (`wasm/package.json`, not a global install —
+`npm install` once inside `wasm/`).
 
 Run locally:
 
 ```sh
-node wasm/verify_node.mjs approve        # or: reject | zero-income
-node wasm/verify_node.mjs 500000 2000000 6000000   # raw existing-debt/requested-amount/annual-income
+cd wasm && npm install   # once, installs nbb into wasm/node_modules
+nbb verify_node.cljs approve        # or: reject | zero-income
+nbb verify_node.cljs 500000 2000000 6000000   # raw existing-debt/requested-amount/annual-income
 ```
 
 (needs the sibling checkout `orgs/kotoba-lang/wasm-webcomponent` present,
-per the west layout).
+per the west layout — `verify_node.cljs` requires `actor-host.js` by
+relative path, same as the original `.mjs` did).
 
 **Deployed and verified on a real murakumo fleet node (`asher`)**,
-2026-07-07: transferred the compiled `.wasm` + `wasm-webcomponent/src/`
-(21 files, 232K) to `/tmp` over `rsync`, ran all three scenarios there with
-`node wasm/verify_node.mjs <scenario>`, got results identical to the local
-run for each, then removed the transferred files (Node.js itself was
-already present on the fleet from the isic-6511 PoC and was left in place,
-per that ADR's precedent — not reinstalled or removed here).
+2026-07-07: transferred the compiled `.wasm`, `wasm-webcomponent/src/`, and
+`wasm/node_modules` (2.5M total) to `/tmp` over `rsync`, ran all three
+scenarios there with `./node_modules/.bin/nbb verify_node.cljs <scenario>`,
+got results identical to the local run for each, then removed the
+transferred files (Node.js itself was already present on the fleet from
+the isic-6511 PoC and was left in place, per that ADR's precedent — not
+reinstalled or removed here).
 
 ## Follow-ups
 

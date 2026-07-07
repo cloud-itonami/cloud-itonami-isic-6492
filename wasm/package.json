@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "devDependencies": {
+    "nbb": "^1.4.208"
+  }
+}
