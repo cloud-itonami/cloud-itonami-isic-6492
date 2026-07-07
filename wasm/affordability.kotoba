@@ -1,0 +1,13 @@
+(ns cloud-itonami-affordability)
+
+(defn affordable? [existing-debt requested-amount annual-income]
+  (if (> annual-income 0)
+    (<= (* 100 (+ existing-debt requested-amount)) (* 43 annual-income))
+    0))
+
+(defn main []
+  (if (affordable? 500000 2000000 6000000)
+    (if (not (affordable? 3000000 3000000 6000000))
+      1
+      0)
+    0))
