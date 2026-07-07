@@ -41,15 +41,32 @@ bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/afford
   --output ../../cloud-itonami/cloud-itonami-isic-6492/wasm/affordability.wasm --json
 ```
 
+## Fleet deployment (Node.js / `wasm-webcomponent`)
+
+`verify_node.mjs` hosts `affordability.wasm` via `kotoba-lang/wasm-webcomponent`'s
+`actor-host.js` (plain Node.js, no JVM) — the same pattern
+ADR-2607072530 established for `cloud-itonami-isic-6511`, reused here since
+this module needs zero host imports (simpler: no `log-write`/`llm-infer`
+wiring, no scenario input bytes to write into linear memory).
+
+Run locally: `node wasm/verify_node.mjs` (needs the sibling checkout
+`orgs/kotoba-lang/wasm-webcomponent` present, per the west layout).
+
+**Deployed and verified on a real murakumo fleet node (`asher`)**,
+2026-07-07: transferred the compiled `.wasm` + `wasm-webcomponent/src/`
+(21 files, 232K) to `/tmp` over `rsync`, ran `node wasm/verify_node.mjs`
+there, got the identical `{"result": 1, "ok": true}` as the local run, then
+removed the transferred files (Node.js itself was already present on the
+fleet from the isic-6511 PoC and was left in place, per that ADR's
+precedent — not reinstalled or removed here).
+
 ## Follow-ups
 
 - `main` is 0-arity with two scenarios hardcoded in (an approve case and a
   reject case, self-checking that both are judged correctly) — there is no
   parameterized-invocation ABI yet for a host to pass real applicant numbers
   in. That's real product work, out of scope here.
-- Only proves the JVM/Chicory host path (`kototama.tender`). The
-  browser-native path (`wasm-webcomponent`'s `actor-host.js`,
-  ADR-2607062400) is not exercised by this module.
 - This module requests zero host imports (pure arithmetic) — it does not
   exercise the `actor:host` capability-grant path at all. That's still only
-  proven by `kotoba-lang/kototama`'s own sha256/gen-keypair fixtures.
+  proven by `kotoba-lang/kototama`'s own sha256/gen-keypair fixtures and
+  ADR-2607072530's `llm-infer` capability.
