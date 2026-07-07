@@ -32,6 +32,14 @@
 ## Trust Controls
 
 - no loan is disbursed without human sign-off
-- fabricated creditworthiness evidence forces a hold, not an override
-- every disbursement path is auditable
+- a fabricated jurisdiction truth-in-lending citation, incomplete
+  disclosure evidence, a disbursement attempt against an application
+  that was never approved, or an application whose own debt-to-income
+  ratio exceeds the affordability ceiling -- each forces a hold, not an
+  override
+- a loan cannot be disbursed twice: a double-disbursement attempt is
+  held off this actor's own application status alone, with no upstream
+  comparison needed
+- every intake, assessment, screening, approval and disbursement path
+  is auditable
 - emergency manual override paths remain outside LLM control
