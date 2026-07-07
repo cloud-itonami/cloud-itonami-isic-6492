@@ -108,17 +108,24 @@ instead of a one-shot CLI call:
   `{"existingDebt":..,"requestedAmount":..,"annualIncome":..}` (cents) →
   `{"ok":true,"result":0|1,"affordable":bool,"input":{...}}`.
 
-**Deployed resident on the real murakumo fleet node `asher`**, 2026-07-08:
-installed as a new macOS LaunchDaemon (`com.murakumo.cljc-isic-6492`,
-`RunAtLoad`+`KeepAlive`, `/opt/homebrew/bin/node .../node_modules/.bin/nbb
-server.cljs 8479`), which **replaces** `asher`'s Rust `com.murakumo.kotoba-mesh`
-daemon (stopped, plist left on disk for revert) — the first cloud-itonami
-wasm actor that's genuinely resident (survives process death via
-`KeepAlive`, serves indefinitely) rather than one-off-verified. See
-ADR-2607082000 for the full record, verification, and consequences
-(asher drops out of the fleet's libp2p mesh and the ADR-2607072400 kaisha
-pod stops working on this one node — the other 9 fleet nodes are
-untouched, still Rust).
+**Deployed resident on 5 of the 10 murakumo fleet nodes** (`asher`,
+`naphtali`, `judah`, `zebulun`, `issachar`), 2026-07-08: installed as a new
+macOS LaunchDaemon (`com.murakumo.cljc-isic-6492`, `RunAtLoad`+`KeepAlive`,
+`/opt/homebrew/bin/node .../node_modules/.bin/nbb server.cljs 8479`) on
+each, which **replaces** that node's Rust `com.murakumo.kotoba-mesh` daemon
+— the first cloud-itonami wasm actor that's genuinely resident (survives
+process death via `KeepAlive`, serves indefinitely) rather than
+one-off-verified. `judah`/`zebulun`/`issachar` needed `brew install node`
+first (no Node.js there before this). The Rust `kotoba-server`/`kotoba`
+binaries and their LaunchDaemon plists have since been **pruned** on all 5
+nodes (not just stopped) — reverting now needs `murakumo`'s own
+provisioning flow, not a simple `launchctl bootstrap`. `simeon`/`levi`/
+`joseph`/`dan` were unreachable (SSH timeout) and `benjamin` reaches but
+its login shell errors out — not yet migrated. See ADR-2607082000 (and its
+2026-07-08 addendum) for the full record, verification, and consequences
+(these 5 nodes drop out of the fleet's libp2p mesh and the
+ADR-2607072400 kaisha pod stops working on them — the still-unreachable
+nodes are untouched, still Rust).
 
 **nbb `.then().catch()` bug found**: chaining `.catch` after `.then` threw
 a runtime `Could not find instance method: catch` inside the real
