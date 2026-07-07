@@ -97,12 +97,46 @@ transferred files (Node.js itself was already present on the fleet from
 the isic-6511 PoC and was left in place, per that ADR's precedent — not
 reinstalled or removed here).
 
+## Resident HTTP host (`server.cljs`) — replaces `asher`'s Rust `kotoba-server`
+
+`server.cljs` wraps the same `actor-host.js` ABI `verify_node.cljs` uses in
+a persistent `node:http` listener (`nbb server.cljs [port]`, default 8479)
+instead of a one-shot CLI call:
+
+- `GET /health` — liveness probe.
+- `POST /isic-6492/affordability` — body
+  `{"existingDebt":..,"requestedAmount":..,"annualIncome":..}` (cents) →
+  `{"ok":true,"result":0|1,"affordable":bool,"input":{...}}`.
+
+**Deployed resident on the real murakumo fleet node `asher`**, 2026-07-08:
+installed as a new macOS LaunchDaemon (`com.murakumo.cljc-isic-6492`,
+`RunAtLoad`+`KeepAlive`, `/opt/homebrew/bin/node .../node_modules/.bin/nbb
+server.cljs 8479`), which **replaces** `asher`'s Rust `com.murakumo.kotoba-mesh`
+daemon (stopped, plist left on disk for revert) — the first cloud-itonami
+wasm actor that's genuinely resident (survives process death via
+`KeepAlive`, serves indefinitely) rather than one-off-verified. See
+ADR-2607082000 for the full record, verification, and consequences
+(asher drops out of the fleet's libp2p mesh and the ADR-2607072400 kaisha
+pod stops working on this one node — the other 9 fleet nodes are
+untouched, still Rust).
+
+**nbb `.then().catch()` bug found**: chaining `.catch` after `.then` threw
+a runtime `Could not find instance method: catch` inside the real
+nested-callback HTTP-handler shape (isolated minimal repros of the same
+shape did NOT reproduce it — root cause not fully pinned). Worked around
+throughout `server.cljs` by using the two-arg `.then(onFulfilled,
+onRejected)` form instead of `.then().catch()` chains everywhere.
+
 ## Follow-ups
 
 - This module requests zero host imports (pure arithmetic) — it does not
   exercise the `actor:host` capability-grant path at all. That's still only
   proven by `kotoba-lang/kototama`'s own sha256/gen-keypair fixtures and
   ADR-2607072530's `llm-infer` capability.
-- No wire transport (HTTP/XRPC/etc.) puts a host in front of this ABI yet —
-  it's callable from a Clojure or Node.js process directly, not over a
-  network. That's real product work, out of scope here.
+- `server.cljs` hardcodes a single route for a single actor — not a
+  general dispatcher. Plain HTTP, no auth/TLS — fine for this experiment,
+  not production-ready.
+- Only `asher` runs the cljc/nbb daemon; the other 9 fleet nodes are still
+  Rust `kotoba-server`. Fleet-wide rollout, and restoring mesh/kaisha-pod
+  function on `asher`, are both out of scope here.
+- Root-causing the nbb `.catch` bug (report upstream?) is unstarted.
