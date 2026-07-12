@@ -9,9 +9,9 @@
   (is (= 0.875 (r/compute-debt-to-income-ratio {:existing-debt 500000 :requested-amount 3000000 :annual-income 4000000}))))
 
 (deftest debt-to-income-ratio-validation-rules
-  (is (thrown? Exception (r/compute-debt-to-income-ratio {:existing-debt 0 :requested-amount 0 :annual-income 0})))
-  (is (thrown? Exception (r/compute-debt-to-income-ratio {:existing-debt -1 :requested-amount 0 :annual-income 100})))
-  (is (thrown? Exception (r/compute-debt-to-income-ratio {:existing-debt 0 :requested-amount -1 :annual-income 100}))))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/compute-debt-to-income-ratio {:existing-debt 0 :requested-amount 0 :annual-income 0})))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/compute-debt-to-income-ratio {:existing-debt -1 :requested-amount 0 :annual-income 100})))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/compute-debt-to-income-ratio {:existing-debt 0 :requested-amount -1 :annual-income 100}))))
 
 (deftest affordability-ceiling-is-a-real-well-known-constant
   (is (= 0.43 r/affordability-ceiling)))
@@ -33,10 +33,10 @@
     (is (= (get-in result ["record" "immutable"]) true))))
 
 (deftest loan-disbursement-validation-rules
-  (is (thrown? Exception (r/register-loan-disbursement "" 500000 "JPN" 0)))
-  (is (thrown? Exception (r/register-loan-disbursement "app-1" -1 "JPN" 0)))
-  (is (thrown? Exception (r/register-loan-disbursement "app-1" 500000 "" 0)))
-  (is (thrown? Exception (r/register-loan-disbursement "app-1" 500000 "JPN" -1))))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/register-loan-disbursement "" 500000 "JPN" 0)))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/register-loan-disbursement "app-1" -1 "JPN" 0)))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/register-loan-disbursement "app-1" 500000 "" 0)))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (r/register-loan-disbursement "app-1" 500000 "JPN" -1))))
 
 (deftest disbursement-history-is-append-only
   (let [d1 (r/register-loan-disbursement "app-1" 500000 "JPN" 0)
