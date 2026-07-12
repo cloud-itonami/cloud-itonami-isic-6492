@@ -84,12 +84,23 @@
   listed as a numbered HARD check above because it needs no upstream
   comparison at all -- `double-disbursement-violations` refuses to
   disburse the SAME application twice, off this actor's own
-  disbursement history."
+  disbursement history.
+
+  The decision itself is delegated to the safety kernel
+  `credit.kernels.gate` (integer-coded, fail-closed, safe-kotoba
+  subset); this namespace keeps gathering the human-readable violation
+  evidence and maps the kernel's verdict code back to keywords."
   (:require [credit.facts :as facts]
+            [credit.kernels.gate :as gate]
             [credit.registry :as registry]
             [credit.store :as store]))
 
-(def confidence-floor 0.6)
+(def confidence-floor
+  "Documented threshold. The DECIDING copy is
+  `credit.kernels.gate/confidence-floor-x100` (integer x100 in the
+  safety kernel); this def is kept for callers/docs and pinned equal
+  by `credit.kernels.gate-test`."
+  0.6)
 
 (def high-stakes
   "Stakes grave enough to always require a human, even when clean.
@@ -97,6 +108,17 @@
   actor performs -- a single-member set, matching `cloud-itonami-isic-
   6511`'s/`6621`'s/`6629`'s/`6612`'s single-actuation shape."
   #{:actuation/disburse-loan})
+
+(def ^:private affordability-checked-ops
+  "Ops that carry the debt-to-income affordability check -- the same
+  set `affordability-exceeded-violations` guards on."
+  #{:creditworthiness/screen :loan/disburse})
+
+(defn- confidence->x100
+  "Host bridge (façade-side, not kernel vocabulary): scale a 0.0..1.0
+  advisor confidence to the kernel's integer x100 wire code."
+  [c]
+  (Math/round (* 100.0 (double c))))
 
 ;; ----------------------------- checks -----------------------------
 
@@ -180,21 +202,45 @@
    {:ok? bool :violations [..] :confidence c :escalate? bool :high-stakes? bool
     :hard? bool}."
   [request _context proposal st]
-  (let [hard (into []
-                   (concat (spec-basis-violations request proposal)
-                           (evidence-incomplete-violations request st)
-                           (application-not-approved-violations request st)
-                           (affordability-exceeded-violations request st)
-                           (double-disbursement-violations request st)))
+  (let [spec-v (spec-basis-violations request proposal)
+        evid-v (evidence-incomplete-violations request st)
+        napp-v (application-not-approved-violations request st)
+        affd-v (affordability-exceeded-violations request st)
+        dbl-v  (double-disbursement-violations request st)
+        hard (into [] (concat spec-v evid-v napp-v affd-v dbl-v))
         conf (:confidence proposal 0.0)
-        low? (< conf confidence-floor)
         stakes? (boolean (high-stakes (:stake proposal)))
-        hard? (boolean (seq hard))]
-    {:ok?          (and (not hard?) (not low?) (not stakes?))
+        ;; Affordability bridge: the kernel re-decides the ceiling from
+        ;; the application's raw integer fields (100*total > 43*income,
+        ;; EXACT integer arithmetic -- no float ratio crosses the
+        ;; boundary), matching `affordability-exceeded-violations`'s
+        ;; human-readable double compare at every representable input.
+        afford? (boolean (affordability-checked-ops (:op request)))
+        affd-app (when afford? (store/application st (:subject request)))
+        ;; The decision itself is delegated to the safety kernel
+        ;; (credit.kernels.gate, integer-coded fail-closed core); this
+        ;; façade only gathers evidence (violation lists with
+        ;; human-readable details) and maps codes back to keywords.
+        ;; Kernel is stricter than the old inline logic on ONE case by
+        ;; design: an out-of-range confidence (< 0 or > 1.0) now
+        ;; escalates instead of counting as high confidence.
+        code (gate/verdict-code (if (seq spec-v) 1 0)
+                                (if (seq evid-v) 1 0)
+                                (if (seq napp-v) 1 0)
+                                (if (seq dbl-v) 1 0)
+                                (if afford? 1 0)
+                                (if afford?
+                                  (+ (:existing-debt affd-app)
+                                     (:requested-amount affd-app))
+                                  0)
+                                (if afford? (:annual-income affd-app) 0)
+                                (confidence->x100 conf)
+                                (if stakes? 1 0))]
+    {:ok?          (= 0 code)
      :violations   hard
      :confidence   conf
-     :hard?        hard?
-     :escalate?    (and (not hard?) (or low? stakes?))
+     :hard?        (= 2 code)
+     :escalate?    (= 1 code)
      :high-stakes? stakes?}))
 
 (defn hold-fact

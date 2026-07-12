@@ -24,6 +24,13 @@
                       {:local/root "../../kotoba-lang/kototama"}}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
+  ;; PRIMARY gate: the portable .cljc suite under a real ClojureScript
+  ;; host (runtime priority: cljs first, JVM compat). The JVM-only
+  ;; wasm.affordability-test (kototama.tender/Chicory) is excluded --
+  ;; see credit.portable-cljs-test-runner's docstring.
+  ;;   clojure -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
+  ;;     -m cljs.main --target node -m credit.portable-cljs-test-runner
+  :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}}}
   ;; static analysis -- clj-kondo from deps (no binary), errors fail CI.
   :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}
          :main-opts    ["-m" "clj-kondo.main"
