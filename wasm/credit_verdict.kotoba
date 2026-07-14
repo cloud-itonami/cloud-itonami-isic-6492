@@ -1,0 +1,78 @@
+(ns cloud-itonami-credit-verdict)
+
+;; Narrow-slice port of cloud-itonami-isic-6492's
+;; `credit.kernels.gate/verdict-code` (+ its combinators and
+;; `affordability-exceeded`/`hard-violation` dependencies) into `.kotoba`,
+;; per ADR-2607141900's approved pattern (governor DECISION LOGIC only, no
+;; atoms/records/facades/external state -- the same shape as the existing
+;; `wasm/affordability.kotoba` narrow slice in the same repo). Every wire
+;; code, fail-closed direction and branch order below is copied verbatim
+;; from `credit.kernels.gate`'s own docstring and body; see that file for
+;; the full rationale.
+
+(defn not-flag [a] (if (= a 0) 1 0))
+(defn norm-flag [a] (if (= a 0) 0 1))
+(defn and2 [a b] (if (= a 1) (if (= b 1) 1 0) 0))
+(defn or2 [a b] (if (= a 1) 1 (if (= b 1) 1 0)))
+(defn or3 [a b c] (or2 a (or2 b c)))
+(defn or5 [a b c d e] (or2 (or3 a b c) (or2 d e)))
+
+;; confidence-floor-x100 = 60, inlined (kotoba-lang/kotoba's wasm-binary
+;; does not recognize top-level `def` -- only `defn`/`ns` -- so named
+;; constants are not available; the existing affordability.kotoba port
+;; inlines its own ceiling constant the same way).
+(defn confidence-low [x100]
+  (if (< x100 0)
+    1
+    (if (< 100 x100)
+      1
+      (if (< x100 60) 1 0))))
+
+;; affordability-ceiling-x100 = 43, inlined for the same reason.
+(defn affordability-exceeded [applicable total income]
+  (if (= (norm-flag applicable) 0)
+    0
+    (if (< income 1)
+      1
+      (if (< total 0)
+        1
+        (if (< (* 43 income) (* 100 total)) 1 0)))))
+
+(defn hard-violation [spec-missing evidence-incomplete not-approved double-disb
+                       afford-applicable afford-total afford-income]
+  (or5 (norm-flag spec-missing)
+       (norm-flag evidence-incomplete)
+       (norm-flag not-approved)
+       (norm-flag double-disb)
+       (affordability-exceeded afford-applicable afford-total afford-income)))
+
+(defn verdict-code [spec-missing evidence-incomplete not-approved double-disb
+                     afford-applicable afford-total afford-income
+                     confidence-x100 actuation]
+  (if (= 1 (hard-violation spec-missing evidence-incomplete not-approved double-disb
+                            afford-applicable afford-total afford-income))
+    2
+    (if (= 1 (or2 (confidence-low confidence-x100) (norm-flag actuation)))
+      1
+      0)))
+
+;; ABI: `main` stays 0-arity (kotoba-lang/kotoba's wasm-binary rejects a
+;; parameterized main -- :main-arity) and reads its 9 real i32 inputs out
+;; of the exported linear memory instead, at fixed byte offsets a host
+;; writes into before calling main() (same convention as
+;; wasm/affordability.kotoba and cloud-itonami-isic-6511's
+;; underwriting_decision.kotoba):
+;;   offset  0: spec-missing        (flag, 0 = no / any non-0 = yes)
+;;   offset  4: evidence-incomplete (flag)
+;;   offset  8: not-approved        (flag)
+;;   offset 12: double-disb         (flag)
+;;   offset 16: afford-applicable   (flag)
+;;   offset 20: afford-total        (i32, existing-debt + requested-amount)
+;;   offset 24: afford-income       (i32, annual-income)
+;;   offset 28: confidence-x100     (i32, advisor confidence * 100)
+;;   offset 32: actuation           (flag)
+;; Returns 0 (ok/commit-eligible), 1 (escalate), or 2 (hard-hold).
+(defn main []
+  (verdict-code (mem-i32-at 0 0) (mem-i32-at 0 4) (mem-i32-at 0 8) (mem-i32-at 0 12)
+                (mem-i32-at 0 16) (mem-i32-at 0 20) (mem-i32-at 0 24)
+                (mem-i32-at 0 28) (mem-i32-at 0 32)))

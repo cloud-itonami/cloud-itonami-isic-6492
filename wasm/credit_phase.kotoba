@@ -1,0 +1,60 @@
+(ns cloud-itonami-credit-phase)
+
+;; Narrow-slice port of cloud-itonami-isic-6492's
+;; `credit.kernels.gate/phase-disposition` + `phase-reason` (and their
+;; `op-write-enabled`/`op-auto-enabled` dependencies) into `.kotoba`, same
+;; ADR-2607141900 pattern as `credit_verdict.kotoba` in this same commit.
+;; Since a kotoba-lang/kotoba wasm module exports exactly one entry point
+;; (`main`), and the two source functions share both their inputs and
+;; their branch structure one-for-one, this file returns them PACKED into
+;; one i32 instead of splitting into two separate modules that would
+;; duplicate op-write-enabled/op-auto-enabled: `10*disposition + reason`.
+;; disposition and reason are each always in {0,1,2}, so the packed value
+;; is always in [0, 22] and losslessly unpacks via (quot 10) / (rem 10) --
+;; the host does that unpacking, not this module.
+
+(defn op-write-enabled [phase op]
+  (if (= phase 1)
+    (if (= op 1) 1 0)
+    (if (= phase 2)
+      (if (= op 1) 1 (if (= op 2) 1 (if (= op 3) 1 0)))
+      (if (= phase 3)
+        (if (= op 1) 1 (if (= op 2) 1 (if (= op 3) 1 (if (= op 4) 1 (if (= op 5) 1 0)))))
+        0))))
+
+(defn op-auto-enabled [phase op]
+  (if (= phase 3) (if (= op 1) 1 0) 0))
+
+(defn phase-disposition [phase op governor-disposition]
+  (if (= governor-disposition 2)
+    2
+    (if (= op 0)
+      governor-disposition
+      (if (= 0 (op-write-enabled phase op))
+        2
+        (if (= governor-disposition 0)
+          (if (= 1 (op-auto-enabled phase op)) 0 1)
+          governor-disposition)))))
+
+(defn phase-reason [phase op governor-disposition]
+  (if (= governor-disposition 2)
+    0
+    (if (= op 0)
+      0
+      (if (= 0 (op-write-enabled phase op))
+        1
+        (if (= governor-disposition 0)
+          (if (= 1 (op-auto-enabled phase op)) 0 2)
+          0)))))
+
+;; ABI: main 0-arity, reads 3 i32 from linear memory at fixed offsets:
+;;   offset 0: phase                (0..3, out-of-range -> no writes at all)
+;;   offset 4: op                   (0 read / 1..5 known write ops / 6+ unknown write)
+;;   offset 8: governor-disposition (0 commit / 1 escalate / 2 hold)
+;; Returns 10*phase-disposition + phase-reason, each in {0,1,2}: 0/1/2 =
+;; disposition 0 (commit) with reason 0 (none); 10/11/12 = disposition 1
+;; (escalate) with reason 0/1/2; 20/21/22 = disposition 2 (hold) with
+;; reason 0/1/2. Reason 0 = none, 1 = phase-disabled, 2 = phase-approval.
+(defn main []
+  (+ (* 10 (phase-disposition (mem-i32-at 0 0) (mem-i32-at 0 4) (mem-i32-at 0 8)))
+     (phase-reason (mem-i32-at 0 0) (mem-i32-at 0 4) (mem-i32-at 0 8))))
