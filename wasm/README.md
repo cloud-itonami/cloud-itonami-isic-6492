@@ -202,6 +202,38 @@ correctly unported per ADR-2607141900's decision — only the pure decision
 core moves to `.kotoba`, the façade stays JVM/CLJS Clojure and would call
 into the compiled WASM (not shown here) the same way a host would.
 
+## `credit.kernels.gate-kotoba` — a verified drop-in function (2026-07-14, ADR-2607151500 addendum 4)
+
+`src/credit/kernels/gate_kotoba.clj` wires `credit_verdict.wasm`/
+`credit_phase.wasm` up as `verdict-code`/`phase-disposition`/
+`phase-reason` — the SAME signatures as `credit.kernels.gate`'s own
+in-process functions, hosted via `kototama.tender` instead. A genuine
+drop-in: `credit.governor/check` (which calls `gate/verdict-code`
+directly) and `credit.phase/gate` (which calls `kernel/phase-disposition`/
+`kernel/phase-reason`) could be pointed at this namespace's functions
+with no other change.
+
+**Neither call site is actually flipped.** Doing so means every proposal
+`credit.governor/check` evaluates crosses a real WASM instantiation
+boundary in production — a real behavior/performance change to a live
+decision gate, left for an explicit owner decision, not made
+autonomously here (the same reasoning `kotoba-lang/kototama`'s own
+`prior-shortcut-kotoba` port applied to `kototama.unspsc.organism`'s
+call site).
+
+**Verified**: `test/credit/kernels/gate_kotoba_test.clj` calls BOTH
+`credit.kernels.gate`'s in-process functions and `gate-kotoba`'s
+WASM-backed ones with the exact same 52-case battery
+(`credit.kernels.gate.cljc`'s own `battery`) and asserts three-way
+agreement (expected value == in-process == WASM-backed) on every case.
+`clojure -M:test`: 59 tests / 659 assertions, 0 failures.
+
+Requires `kototama.tender` (and Chicory, transitively) on the classpath
+— kept out of this repo's main `:deps` (only in the `:test` alias, same
+as the existing `wasm.*-test` namespaces), so requiring
+`credit.governor`/`credit.phase` never forces it on a consumer who
+doesn't want the WASM-backed variant.
+
 ## Follow-ups
 
 - This module requests zero host imports (pure arithmetic) — it does not
