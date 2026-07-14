@@ -134,6 +134,74 @@ shape did NOT reproduce it — root cause not fully pinned). Worked around
 throughout `server.cljs` by using the two-arg `.then(onFulfilled,
 onRejected)` form instead of `.then().catch()` chains everywhere.
 
+## `credit_verdict.kotoba` / `credit_phase.kotoba` — the governor's own decision core (2026-07-14, ADR-2607141900 / ADR-2607150000)
+
+`affordability.kotoba` above ports only the affordability sub-check.
+`credit_verdict.kotoba` and `credit_phase.kotoba` go further and port the
+governor's actual DECISION LOGIC — `credit.kernels.gate/verdict-code` (+
+its `hard-violation`/`affordability-exceeded`/`confidence-low` and `or2`/
+`or3`/`or5`/`and2`/`norm-flag`/`not-flag` combinator dependencies) and
+`credit.kernels.gate/phase-disposition` + `phase-reason` (+
+`op-write-enabled`/`op-auto-enabled`) — per ADR-2607141900's approved
+narrow-slice pattern (governor decision logic only, no atoms/records/
+facades/external state; `credit.governor/check`'s full façade, which reads
+mutable `store` state and builds string `:detail` messages, remains
+correctly out of scope). `credit.kernels.gate.cljc` was ALREADY written in
+this "safe-kotoba subset" style (pure integer arithmetic, nested `if`, no
+keywords/maps/atoms) specifically to keep this door open without a
+rewrite — porting it required zero restructuring, only inlining its two
+named constants (`confidence-floor-x100` = 60, `affordability-ceiling-
+x100` = 43) as literals, since `kotoba-lang/kotoba`'s `wasm-binary` only
+recognizes top-level `ns`/`defn` (a plain `def` is silently ignored, not
+an error) — same convention `affordability.kotoba` already established.
+
+Two files, not one, because a `kotoba-lang/kotoba` wasm module exports
+exactly one entry point (`main`) — `credit_verdict.kotoba` covers the
+governor verdict (`main` returns 0 ok / 1 escalate / 2 hard-hold, reading
+9 i32 inputs from memory), `credit_phase.kotoba` covers the phase gate
+(`phase-disposition` and `phase-reason` share input shape and branch
+structure one-for-one, so rather than duplicate `op-write-enabled`/
+`op-auto-enabled` across two modules, `main` packs both into one return
+value: `10*disposition + reason`, unpacked by the host via `quot`/`rem`).
+See each file's own `ns` docstring for the exact memory-offset ABI.
+
+**Verified two ways**: (1) `clojure -M:test` — `test/wasm/
+credit_verdict_test.clj` and `test/wasm/credit_phase_test.clj` host the
+compiled `.wasm` via `kototama.tender` (same pattern as `wasm.
+affordability-test`), with every case copied verbatim from `credit.
+kernels.gate.cljc`'s own executable `battery` (52 cases: 21 verdict + 10
+afford + 21 phase) — **57 tests / 596 assertions total, 0 failures**
+(the existing suite, including `credit.kernels.gate-test`'s own in-process
+battery run, is unaffected). `clojure -M:lint`: 0 errors, 0 warnings.
+(2) Independently, before committing, both `.kotoba` sources were compiled
+and run through `kotoba-lang/kotoba`'s own real `wasm-binary` + Chicory
+execution pipeline directly (not via `kototama.tender`) against the same
+52 battery cases — 0 failures, confirming the port doesn't depend on any
+`kototama`-specific behavior.
+
+**Rebuilding**:
+
+```sh
+cd ../../kotoba-lang/kotoba   # sibling checkout, west-managed
+bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/credit_verdict.kotoba \
+  --package-lock kotoba.lock.edn \
+  --output ../../cloud-itonami/cloud-itonami-isic-6492/wasm/credit_verdict.wasm --json
+bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/credit_phase.kotoba \
+  --package-lock kotoba.lock.edn \
+  --output ../../cloud-itonami/cloud-itonami-isic-6492/wasm/credit_phase.wasm --json
+```
+
+**Not done here (honest scope)**: no fleet deployment (`verify_node.cljs`/
+`server.cljs` wiring, murakumo LaunchDaemon rollout) for either new
+module — this pass only proves the governor's decision core compiles and
+runs correctly as `.kotoba`/WASM, mirroring how ADR-2607072600 (compile +
+verify) and ADR-2607082000 (fleet deploy) were kept as separate steps for
+the affordability check. `credit.governor/check`'s full façade (mutable
+`store`, string `:detail` messages, fact-catalog lookups) remains
+correctly unported per ADR-2607141900's decision — only the pure decision
+core moves to `.kotoba`, the façade stays JVM/CLJS Clojure and would call
+into the compiled WASM (not shown here) the same way a host would.
+
 ## Follow-ups
 
 - This module requests zero host imports (pure arithmetic) — it does not
