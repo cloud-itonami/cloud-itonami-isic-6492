@@ -113,20 +113,25 @@
 
     <main>
         <section>
-            <h2>About</h2>
-            <p>An open-source business blueprint for consumer and commercial credit granting. This actor automates loan-application intake, creditworthiness screening against a debt-to-income affordability check, and disbursement proposal generation — all governed by an independent Credit Governor that enforces jurisdiction truth-in-lending requirements, prevents double-disbursement, and ensures no loan disburses without human sign-off.</p>
-            <p>Built on the <code>langgraph-clj</code> StateGraph runtime, the same portable actor pattern powering nine other cloud-itonami verticals. Covers the core governed lifecycle from intake through underwriting approval with an immutable audit ledger, ready to fork and operate in any jurisdiction.</p>
+            <h2>The Problem</h2>
+            <p>LLMs excel at drafting creditworthiness summaries and normalizing loan applications. But they have no notion of which jurisdiction's truth-in-lending rules are official, no license to disburse real funds, and no way to verify whether a borrower's debt-to-income ratio actually fits a responsible-lending ceiling. Letting an LLM disburse directly invites fabricated citations, silently irresponsible lending, and liability.</p>
+        </section>
+
+        <section>
+            <h2>Our Solution</h2>
+            <p>An independent <strong>Credit Governor</strong> seals the LLM into a single node and wraps it with jurisdiction-aware truth-in-lending checks, fresh affordability verification, and mandatory human approval before any loan disburses. Fabricated citations, incomplete disclosures, debt-to-income violations, or double-disbursement attempts force a hard hold with no override.</p>
+            <p><strong>What this is not:</strong> This system does not hold a lending license itself — you supply the license and underwriting expertise. It also does not model a full underwriting decision (no credit scores, collateral, or payment-history weighting). It provides the compliance scaffold so you don't rebuild the governance layer from scratch.</p>
         </section>
 
         <section>
             <h2>Get Started</h2>
-            <p><strong>Fork + self-host on itonami.cloud:</strong> Register as an open operator and claim your free tier. Set your own jurisdiction, licensing, and underwriting policy.</p>
+            <p><strong>Claim a free tenant and self-host:</strong> Register as an operator, fork this blueprint, and deploy on your own infrastructure. Configure your jurisdiction, licensing, and underwriting policy.</p>
             <div class="cta-group">
-                <a href="https://itonami.cloud/isco-1212/" class="cta-button cta-primary">Claim Free Tier</a>
+                <a href="https://itonami.cloud/isco-1212/" class="cta-button cta-primary">Claim Free Tenant</a>
             </div>
-            <p style="margin-top: 1.5rem;"><strong>Managed path:</strong> Full support, hosting, and compliance integration for production lending operations.</p>
+            <p style="margin-top: 1.5rem;"><strong>Go-live with support:</strong> Production hosting, compliance integration, and managed operations for lending businesses.</p>
             <div class="cta-group">
-                <a href="https://itonami.cloud/docs/go-live.md" class="cta-button cta-secondary">Go-Live Docs</a>
+                <a href="https://itonami.cloud/docs/go-live.md" class="cta-button cta-secondary">Production Docs</a>
             </div>
         </section>
 

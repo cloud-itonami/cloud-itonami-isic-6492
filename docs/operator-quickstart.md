@@ -1,5 +1,15 @@
 # Operator Quickstart
 
+## Who This Is For
+
+This blueprint is for **licensed lending institutions, fintech operators, and open-business partners** who want to:
+- Deploy a governed credit-granting system without rebuilding compliance from scratch
+- Fork this blueprint and operate it in your own jurisdiction with your own license
+- Integrate an LLM-powered intake/screening pipeline that cannot disburse without human approval
+- Run a complete audit trail from application through disbursement
+
+If you're not a licensed lender, you can still fork and study the architecture; the Credit Governor pattern applies to any high-stakes decision workflow.
+
 ## Prerequisites
 
 - **Clojure** — [install](https://clojure.org/guides/getting_started)
@@ -51,7 +61,7 @@ clojure -M:lint
 ## Core modules
 
 ### Credit Governor
-**Location:** `src/credit/governor.cljc`
+**Location:** [`src/credit/governor.cljc`](../src/credit/governor.cljc)
 
 The independent governance layer that enforces four hard-stop checks before any loan action:
 1. **spec-basis** — jurisdiction truth-in-lending requirement must cite an official source
@@ -59,7 +69,7 @@ The independent governance layer that enforces four hard-stop checks before any 
 3. **application-not-approved** — disbursement forbidden on unapproved applications
 4. **affordability-exceeded** — debt-to-income ratio recomputed fresh from the application; exceeding 0.43 (U.S. Qualified Mortgage ceiling) forces a hold
 
-The governor also prevents double-disbursement by checking the application's own status, and gates high-stakes actions (`:loan/disburse`) to human-only execution.
+The governor also prevents double-disbursement by checking the application's own status, and gates high-stakes actions (`:loan/disburse`) to human-only execution. Fabricated citations, incomplete evidence, or affordability violations force a hard hold with no override—audit every decision in [`src/credit/store.cljc`](../src/credit/store.cljc).
 
 ### Phase State Machine
 **Location:** `src/credit/phase.cljc`
