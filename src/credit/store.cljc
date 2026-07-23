@@ -32,10 +32,9 @@
   a query over an immutable log -- the audit trail a borrower trusting
   a lender with a loan needs, and the evidence an operator needs if a
   disbursement is later disputed."
-  (:require #?(:clj  [clojure.edn :as edn]
-               :cljs [cljs.reader :as edn])
-            [credit.registry :as registry]
-            [langchain.db :as d]))
+  (:require [credit.registry :as registry]
+            [langchain.db :as d]
+            [langchain-store.core :as ls]))
 
 (defprotocol Store
   (application [s id])
@@ -154,9 +153,6 @@
    :disbursement/seq           {:db/unique :db.unique/identity}
    :sequence/jurisdiction      {:db/unique :db.unique/identity}})
 
-(defn- enc [v] (pr-str v))
-(defn- dec* [s] (when s (edn/read-string s)))
-
 (defn- application->tx [{:keys [id applicant requested-amount annual-income existing-debt
                                credit-score jurisdiction status disbursement-number]}]
   (cond-> {:application/id id}
@@ -191,21 +187,21 @@
          (map #(pull->application (d/pull (d/db conn) application-pull [:application/id %])))
          (sort-by :id)))
   (creditworthiness-of [_ id]
-    (dec* (d/q '[:find ?p . :in $ ?aid
+    (ls/dec* (d/q '[:find ?p . :in $ ?aid
                 :where [?k :creditworthiness/application-id ?aid] [?k :creditworthiness/payload ?p]]
               (d/db conn) id)))
   (assessment-of [_ application-id]
-    (dec* (d/q '[:find ?p . :in $ ?aid
+    (ls/dec* (d/q '[:find ?p . :in $ ?aid
                 :where [?a :assessment/application-id ?aid] [?a :assessment/payload ?p]]
               (d/db conn) application-id)))
   (ledger [_]
     (->> (d/q '[:find ?s ?f :where [?e :ledger/seq ?s] [?e :ledger/fact ?f]] (d/db conn))
          (sort-by first)
-         (mapv (comp dec* second))))
+         (mapv (comp ls/dec* second))))
   (disbursement-history [_]
     (->> (d/q '[:find ?s ?r :where [?e :disbursement/seq ?s] [?e :disbursement/record ?r]] (d/db conn))
          (sort-by first)
-         (mapv (comp dec* second))))
+         (mapv (comp ls/dec* second))))
   (next-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :sequence/jurisdiction ?j] [?e :sequence/next ?n]]
@@ -219,10 +215,10 @@
       (d/transact! conn [(application->tx value)])
 
       :assessment/set
-      (d/transact! conn [{:assessment/application-id (first path) :assessment/payload (enc payload)}])
+      (d/transact! conn [{:assessment/application-id (first path) :assessment/payload (ls/enc payload)}])
 
       :creditworthiness/set
-      (d/transact! conn [{:creditworthiness/application-id (first path) :creditworthiness/payload (enc payload)}])
+      (d/transact! conn [{:creditworthiness/application-id (first path) :creditworthiness/payload (ls/enc payload)}])
 
       :loan/mark-approved
       (d/transact! conn [{:application/id (first path) :application/status :approved}])
@@ -235,12 +231,12 @@
         (d/transact! conn
                      [(application->tx (assoc application-patch :id application-id))
                       {:sequence/jurisdiction jurisdiction :sequence/next next-n}
-                      {:disbursement/seq (count (disbursement-history s)) :disbursement/record (enc (get result "record"))}])
+                      {:disbursement/seq (count (disbursement-history s)) :disbursement/record (ls/enc (get result "record"))}])
         result)
       nil)
     s)
   (append-ledger! [s fact]
-    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (enc fact)}])
+    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (ls/enc fact)}])
     fact)
   (with-applications [s applications]
     (when (seq applications) (d/transact! conn (mapv application->tx (vals applications)))) s))
