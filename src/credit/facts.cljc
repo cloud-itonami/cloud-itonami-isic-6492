@@ -65,7 +65,16 @@
           :required-evidence ["Darlehensantrag (loan application form)"
                               "Einkommensnachweis (income/creditworthiness verification)"
                               "Vorvertragliche Informationen (truth-in-lending disclosure statement)"
-                              "Erlaubnis nach § 34c GewO (lender registration/license certificate)"]}})
+                              "Erlaubnis nach § 34c GewO (lender registration/license certificate)"]}
+   "IDN" {:name "Indonesia"
+          :owner-authority "Otoritas Jasa Keuangan (OJK / Financial Services Authority)"
+          :legal-basis "Undang-Undang Nomor 4 Tahun 2023 tentang Pengembangan dan Penguatan Sektor Keuangan (P2SK Law), amending Undang-Undang Nomor 21 Tahun 2011 tentang Otoritas Jasa Keuangan"
+          :national-spec "Peraturan OJK (POJK) Nomor 40 Tahun 2024 tentang Layanan Pendanaan Bersama Berbasis Teknologi Informasi (LPBBTI) -- Pasal 10 ayat (1) (izin usaha wajib), Pasal 148 ayat (1) (mitigasi risiko/verifikasi identitas), Pasal 145 ayat (2) huruf f (pengungkapan manfaat ekonomi Pendanaan)"
+          :provenance "https://www.ojk.go.id/id/regulasi/Pages/POJK-40-Tahun-2024-Layanan-Pendanaan-Bersama-Berbasis-Teknologi-Informasi.aspx"
+          :required-evidence ["Perjanjian Pendanaan / permohonan Pendanaan (funding application document, POJK 40/2024 Pasal 144-145)"
+                              "Analisis risiko Pendanaan dan verifikasi identitas Pengguna (creditworthiness/identity verification, Pasal 148 ayat (1) huruf a-b)"
+                              "Pengungkapan manfaat ekonomi Pendanaan dalam Perjanjian Pendanaan (truth-in-lending/cost-of-funding disclosure, Pasal 145 ayat (2) huruf f)"
+                              "Izin usaha Penyelenggara dari Otoritas Jasa Keuangan (lender/operator business license certificate, Pasal 10 ayat (1))"]}})
 
 (defn spec-basis
   "The jurisdiction's requirement map, or nil -- nil means NO spec-basis,
