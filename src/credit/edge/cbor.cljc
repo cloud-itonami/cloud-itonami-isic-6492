@@ -73,7 +73,13 @@
 
 ;; ---- encode (text/array/map only — see ns docstring) ----------------------
 
-(defn- header [major n]
+(defn header
+  "Public (was private) so `credit.edge.kotobase-identity` can build a
+  THIRD envelope shape this ns's own `encode-cacao-envelope` doesn't
+  produce -- see that ns's docstring (kotobase-persistence-migration,
+  docs/adr/0003) and `commitledger.edge.cbor/header`'s identical fix
+  (sibling actor, same fleet) for the full reasoning."
+  [major n]
   (cond
     (< n 24)      [(bit-or (bit-shift-left major 5) n)]
     (<= n 0xff)   [(bit-or (bit-shift-left major 5) 24) n]
@@ -87,7 +93,9 @@
     (throw (js/Error. (str "cbor encode: expected a string, got " (pr-str s)))))
   (vec (array-seq (js/Array.from (.encode (js/TextEncoder.) s)))))
 
-(defn- encode-text [s]
+(defn encode-text
+  "Public (was private) -- see `header`'s docstring for why."
+  [s]
   (into (header 3 (count (utf8-bytes s))) (utf8-bytes s)))
 
 (defn- encode-str-array [strs]

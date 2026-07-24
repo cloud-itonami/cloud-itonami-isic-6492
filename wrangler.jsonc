@@ -8,5 +8,13 @@
       "binding": "ISIC6492_LOAN_KV",
       "id": "5e2aa981b5fb404ca86aa5a54a0efdaf"
     }
-  ]
+  ],
+  "vars": {
+    // Public (not secret -- it IS the public key, base58-encoded).
+    // Regenerate with scripts/generate-actor-identity.cljs.
+    // ISIC6492_ACTOR_SEED (the private key material) is a Cloudflare
+    // Pages SECRET (`wrangler pages secret put ISIC6492_ACTOR_SEED
+    // --project-name cloud-itonami-isic-6492`), never placed here.
+    "ISIC6492_ACTOR_DID": "did:key:z6Mkuxu3RtQ2NxwuT9XaiTd2Xvp78XmJBtBoXwfE3zFa3jJY"
+  }
 }

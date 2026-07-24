@@ -138,20 +138,67 @@
                            :assessments {} :creditworthiness {} :ledger [] :sequences {}
                            :disbursements []))))
 
-;; ----------------------------- DatomicStore (langchain.db) -----------------------------
+;; ----------------------------- DatomicStore (langchain.db, or an injected db-api) -----------------------------
 
 (def ^:private schema
   "DataScript/Datomic-style schema: only constraint attrs are declared.
   Map/compound values (assessment/creditworthiness payloads, ledger
   facts, disbursement records) are stored as EDN strings so
   `langchain.db` doesn't expand them into sub-entities -- the same
-  convention every sibling actor's store uses."
+  convention every sibling actor's store uses.
+
+  `:ledger/seq`/`:disbursement/seq` values are ALWAYS written as STRINGS
+  (`(str (count ...))`, never a raw integer) even though they are plain
+  sequence counters -- kotobase-server's `do-transact` collides EVERY
+  `:db.unique/identity` attribute whose value is a NUMBER (not a string)
+  into entity id \"\" (empty string), silently merging every ledger/
+  disbursement entry that ever hits this into ONE entity on a live
+  kotobase.net graph (confirmed against production,
+  ADR-2607184000's known-issues section; independently re-confirmed
+  against this actor's own would-be kotobase.net graph before this
+  migration -- string-valued identity attrs, e.g. `:application/id`,
+  are unaffected). Applies to every backend sharing this schema/tx-
+  builder code, not just the kotobase-backed one; `parse-seq-num` below
+  decodes back to a number wherever numeric sort/compare is needed."
   {:application/id             {:db/unique :db.unique/identity}
    :assessment/application-id  {:db/unique :db.unique/identity}
    :creditworthiness/application-id {:db/unique :db.unique/identity}
    :ledger/seq                 {:db/unique :db.unique/identity}
    :disbursement/seq           {:db/unique :db.unique/identity}
    :sequence/jurisdiction      {:db/unique :db.unique/identity}})
+
+(defn- parse-seq-num
+  "A `:ledger/seq`/`:disbursement/seq` wire value (ALWAYS a string on
+  this schema -- see schema docstring above) decoded back to a number,
+  purely for local `sort-by`/comparison purposes."
+  [s]
+  #?(:clj (Long/parseLong (str s))
+     :cljs (js/parseInt (str s) 10)))
+
+(defn- chain
+  "`v` is either a plain value (a SYNCHRONOUS db-api, e.g. the in-process
+  `langchain.db/api` default this ns's own `datomic-store` still uses
+  unchanged) or, under `:cljs` when `db-api` is an INJECTED async
+  backend (e.g. `langchain.kotoba-db/kotoba-api-async` pointed at a live
+  kotobase.net graph -- see `credit.edge.kotobase-store`), a real
+  `js/Promise`. Returns `(f v)` directly for a plain value, or a Promise
+  of `(f resolved-v)` for a Promise."
+  [v f]
+  #?(:cljs (if (instance? js/Promise v) (.then v f) (f v))
+     :clj  (f v)))
+
+(defn- collect-chain
+  "`[v1 v2 ...]` (each `chain`-able) -> a `chain`-able of a vector of
+  resolved values, in order. See `commitledger.store/collect-chain`
+  (same fleet, same reasoning) -- independently duplicated here rather
+  than shared, per this repo's own established local-mirror-not-cross-
+  repo-require convention (`credit.edge.base58`'s ns docstring)."
+  [vs]
+  (letfn [(go [vs acc]
+            (if (empty? vs)
+              acc
+              (chain (first vs) (fn [v] (go (rest vs) (conj acc v))))))]
+    (go vs [])))
 
 (defn- application->tx [{:keys [id applicant requested-amount annual-income existing-debt
                                credit-score jurisdiction status disbursement-number]}]
@@ -178,14 +225,30 @@
      :jurisdiction (:application/jurisdiction m) :status (:application/status m)
      :disbursement-number (:application/disbursement-number m)}))
 
-(defrecord DatomicStore [conn]
+(defrecord DatomicStore [conn db-api]
   Store
+  ;; `application`/`all-applications`/`with-applications` are `chain`-
+  ;; aware (work against EITHER a sync or an async `db-api` -- see
+  ;; `chain`'s own docstring): these are the ONLY methods `credit.edge.
+  ;; kotobase-store`'s edge wiring calls against a REMOTE (async)
+  ;; db-api (isic-6492's ONLY exposed HTTP op, `:application/intake`,
+  ;; needs no OTHER cross-application state -- see `credit.edge.loan-
+  ;; endpoints`'s own ns docstring). Every other method below assumes a
+  ;; SYNCHRONOUS `db-api` (true of the in-process default `datomic-
+  ;; store`) -- they are only ever invoked against the in-process
+  ;; snapshot store the StateGraph runs against, never against the
+  ;; remote store directly (`langgraph.graph/run*` executes fully
+  ;; synchronously; see `commitledger.store`'s parallel comment for the
+  ;; full reasoning, identical here).
   (application [_ id]
-    (pull->application (d/pull (d/db conn) application-pull [:application/id id])))
+    (chain ((:pull db-api) ((:db db-api) conn) application-pull [:application/id id])
+           pull->application))
   (all-applications [_]
-    (->> (d/q '[:find [?id ...] :where [?e :application/id ?id]] (d/db conn))
-         (map #(pull->application (d/pull (d/db conn) application-pull [:application/id %])))
-         (sort-by :id)))
+    (chain ((:q db-api) '[:find [?id ...] :where [?e :application/id ?id]] ((:db db-api) conn))
+           (fn [ids]
+             (chain (collect-chain
+                     (mapv (fn [id] ((:pull db-api) ((:db db-api) conn) application-pull [:application/id id])) ids))
+                    (fn [pulls] (vec (sort-by :id (map pull->application pulls))))))))
   (creditworthiness-of [_ id]
     (ls/dec* (d/q '[:find ?p . :in $ ?aid
                 :where [?k :creditworthiness/application-id ?aid] [?k :creditworthiness/payload ?p]]
@@ -196,11 +259,11 @@
               (d/db conn) application-id)))
   (ledger [_]
     (->> (d/q '[:find ?s ?f :where [?e :ledger/seq ?s] [?e :ledger/fact ?f]] (d/db conn))
-         (sort-by first)
+         (sort-by (comp parse-seq-num first))
          (mapv (comp ls/dec* second))))
   (disbursement-history [_]
     (->> (d/q '[:find ?s ?r :where [?e :disbursement/seq ?s] [?e :disbursement/record ?r]] (d/db conn))
-         (sort-by first)
+         (sort-by (comp parse-seq-num first))
          (mapv (comp ls/dec* second))))
   (next-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
@@ -231,23 +294,42 @@
         (d/transact! conn
                      [(application->tx (assoc application-patch :id application-id))
                       {:sequence/jurisdiction jurisdiction :sequence/next next-n}
-                      {:disbursement/seq (count (disbursement-history s)) :disbursement/record (ls/enc (get result "record"))}])
+                      ;; :disbursement/seq is a :db.unique/identity attr --
+                      ;; MUST be a string, never a raw int (see schema
+                      ;; docstring: a numeric identity value collides to
+                      ;; entity id "" on kotobase-server).
+                      {:disbursement/seq (str (count (disbursement-history s))) :disbursement/record (ls/enc (get result "record"))}])
         result)
       nil)
     s)
   (append-ledger! [s fact]
-    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (ls/enc fact)}])
+    ;; :ledger/seq -- same string-identity requirement, see schema docstring.
+    (d/transact! conn [{:ledger/seq (str (count (ledger s))) :ledger/fact (ls/enc fact)}])
     fact)
   (with-applications [s applications]
-    (when (seq applications) (d/transact! conn (mapv application->tx (vals applications)))) s))
+    (if (seq applications)
+      (chain ((:transact! db-api) conn (mapv application->tx (vals applications))) (fn [_] s))
+      s)))
 
 (defn datomic-store
   "A DatomicStore (langchain.db backend) seeded from `data`
   ({:applications ..}); empty when omitted."
   ([] (datomic-store {}))
   ([{:keys [applications]}]
-   (let [s (->DatomicStore (d/create-conn schema))]
+   (let [s (->DatomicStore (d/create-conn schema) d/api)]
      (with-applications s applications))))
+
+(defn store-with-api
+  "`DatomicStore` backed by an INJECTED `db-api` map (`{:q :transact! :db
+  :pull :entid}` -- `langchain.db/api`'s own shape, OR an async variant
+  of it, e.g. `langchain.kotoba-db/kotoba-api-async` -- see `chain`'s
+  docstring for how this record tolerates either) + a matching `conn`,
+  instead of hardcoding `langchain.db`/`langchain.db/create-conn`.
+  Mirrors `crm.store/store-with-api` (cloud-itonami-isic-5820,
+  ADR-2607184000) / `commitledger.store/store-with-api` precisely. Does
+  NOT seed demo data."
+  [db-api conn]
+  (->DatomicStore conn db-api))
 
 (defn datomic-seed-db
   "A DatomicStore seeded with the demo application set -- the Datomic-
