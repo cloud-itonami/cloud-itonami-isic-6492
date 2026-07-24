@@ -1,0 +1,31 @@
+;; clj-kondo config for cloud-itonami-isic-6492.
+;;
+;; Policy: ERROR-level only for :syntax (things that truly break
+;; compilation). WARNING-level for resolution findings, because the new
+;; `src/credit/edge/*` ns family added by `docs/adr/0002-http-edge-loan-
+;; intake.md` (cacao.cljc/base58.cljc/cbor.cljc, ported verify-only
+;; CLJS-only wire-format code, plus the `#?(:cljs ...)` branches in
+;; auth.cljc/kv_store.cljc/loan_endpoints.cljc) is written against
+;; `js/`-interop cljs hosts, but clj-kondo analyzes `.cljc` under BOTH
+;; `:clj` and `:cljs` features -- the `:clj` pass reports every
+;; cljs-only `js/`/`array`/`array-seq`/`clj->js`/`js-obj` symbol as
+;; "unresolved" or "private call" (`clojure.core/array` is private on
+;; the JVM; cljs resolves it as a host array constructor). Downgrading
+;; these to warning keeps `:lint`'s `--fail-level error` meaningful
+;; (real syntax errors still fail) without drowning in false positives
+;; from the host-conditional split -- mirroring the SAME policy
+;; `cloud-itonami-commitment-ledger`'s own `.clj-kondo/config.edn`
+;; already applies to its own `edge/cacao.cljc`/`edge/base58.cljc`/
+;; `edge/cbor.cljc` (this repo's port source), for the identical reason.
+{:skip-comments true
+ :linters {:unresolved-symbol {:level :warning}
+           :unresolved-namespace {:level :warning}
+           :syntax {:level :error}
+           :unused-binding {:level :warning}
+           :unused-namespace {:level :warning}
+           :unused-private-var {:level :warning}
+           :redundant-expression {:level :warning}
+           :redundant-let {:level :warning}
+           :misplaced-docstring {:level :off}
+           :private-call {:level :warning}
+           :reader-conditional {:level :warning}}}

@@ -1,0 +1,10 @@
+{
+  "name": "cloud-itonami-isic-6492",
+  "private": true,
+  "type": "module",
+  "comment": "Edge build (docs/adr/0002-http-edge-loan-intake.md): shadow-cljs compiles src/credit/edge/*.cljc's :cljs branch (see shadow-cljs.edn :edge-api build) into functions/edge/loan-edge-core.js, re-exported by the thin functions/api/loan/*.js shims -- mirroring cloud-itonami-commitment-ledger's own :edge-api build.",
+  "scripts": {
+    "build-edge": "npx shadow-cljs release edge-api",
+    "deploy": "wrangler pages deploy public --project-name=cloud-itonami-isic-6492"
+  }
+}

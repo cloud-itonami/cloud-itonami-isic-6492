@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cloud-itonami-isic-6492</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<h1>cloud-itonami-isic-6492</h1>
+<p>
+  Credit-LLM &#8871; Credit Governor -- a governed consumer/commercial
+  credit-granting actor. This deploy exposes an intake-only, read-only
+  edge API (<code>/api/loan/*</code>) -- <code>:jurisdiction/assess</code>,
+  <code>:creditworthiness/screen</code>, <code>:loan/approve</code> and
+  <code>:loan/disburse</code> are NEVER exposed over HTTP, by design, to
+  preserve this actor's independent governance. See
+  <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6492">the source repository</a>
+  for the full README/ADR.
+</p>
+<h2>API</h2>
+<ul>
+  <li><code>POST /api/loan/intake</code> -- CACAO-gated + caller-allow-list-gated (KNOWN_CALLER_DIDS)</li>
+  <li><code>GET /api/loan/{id}</code> -- CACAO-gated + caller-allow-list-gated</li>
+</ul>
+</body>
+</html>

@@ -2,3 +2,7 @@
 /target/
 /out/
 /wasm/node_modules/
+/node_modules/
+/.shadow-cljs/
+/.wrangler/
+/.clj-kondo/.cache/

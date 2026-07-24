@@ -1,0 +1,16 @@
+;; Edge build (docs/adr/0002-http-edge-loan-intake.md) -- mirrors
+;; cloud-itonami-commitment-ledger's own shadow-cljs.edn :edge-api build
+;; (:target :esm, one shared bundle, thin functions/api/**.js re-export
+;; shims). REBUILD COMMAND: `npx shadow-cljs release edge-api` -- NOT
+;; `compile` (same caveat that repo's shadow-cljs.edn documents: `compile`'s
+;; dev-mode artifact imports a machine-local path and cannot load standalone
+;; on a Cloudflare Pages Function's runtime).
+{:deps {:aliases [:cljs]}
+ :builds
+ {:edge-api
+  {:target :esm
+   :output-dir "functions/edge"
+   :modules {:loan-edge-core
+             {:exports {intakeOnRequestPost credit.edge.loan-endpoints/on-request-post-intake
+                        applicationOnRequestGet credit.edge.loan-endpoints/on-request-get-application}}}
+   :compiler-options {:output-feature-set :es2020 :infer-externs :auto}}}}

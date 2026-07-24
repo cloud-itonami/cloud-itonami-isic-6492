@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cloud-itonami-isic-6492",
+  "pages_build_output_dir": "public",
+  "compatibility_date": "2026-06-28",
+  "kv_namespaces": [
+    {
+      "binding": "ISIC6492_LOAN_KV",
+      "id": "5e2aa981b5fb404ca86aa5a54a0efdaf"
+    }
+  ]
+}
