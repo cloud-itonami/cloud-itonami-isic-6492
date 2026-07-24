@@ -5,7 +5,12 @@
 ;; `compile` (same caveat that repo's shadow-cljs.edn documents: `compile`'s
 ;; dev-mode artifact imports a machine-local path and cannot load standalone
 ;; on a Cloudflare Pages Function's runtime).
-{:deps {:aliases [:cljs]}
+;; :dev composed alongside :cljs -- see cloud-itonami-commitment-ledger's
+;; identical shadow-cljs.edn comment (same fleet, same fix, same reasoning):
+;; without it, shadow-cljs's own classpath resolution silently compiles
+;; against the STALE gitlibs-pinned io.github.kotoba-lang/langchain (via
+;; langgraph-clj's transitive dep), predating `kotoba-api-async`.
+{:deps {:aliases [:dev :cljs]}
  :builds
  {:edge-api
   {:target :esm

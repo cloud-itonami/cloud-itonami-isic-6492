@@ -36,6 +36,7 @@
   invariant always escalates."
   (:require [credit.edge.auth :as auth]
             [credit.edge.caller-allowlist :as allowlist]
+            [credit.edge.kotobase-store :as kotobase]
             [credit.edge.kv-store :as kv]
             [credit.edge.pcompat :as pc]
             [credit.operation :as op]
@@ -189,15 +190,27 @@
    (defn- allowlist-of [env]
      (allowlist/parse-allowlist (aget env "KNOWN_CALLER_DIDS"))))
 
+;; kotobase-persistence-migration (docs/adr/0003): `(kv/cloudflare-kv-
+;; store env)` -- a synchronous constructor -- is replaced below by
+;; `(kotobase/kotobase-kv-store-from-env! env)`, an ASYNC constructor
+;; (minting this actor's own CACAO is). `intake-core!`/`get-application-
+;; core!` ABOVE never change -- they only depend on the `KVStore`
+;; protocol, and `KotobaseKVStore` implements it. If kotobase.net is
+;; unreachable or this actor's identity is misconfigured, `kotobase-kv-
+;; store-from-env!` REJECTS, and the `.catch` below turns that into a
+;; clear 500 -- no KV fallback path.
+
 #?(:cljs
    (defn on-request-post-intake [context]
      (let [env (aget context "env")]
-       (-> (body-of! context)
-           (.then (fn [body]
-                    (if-not body
-                      (auth/json-response {:ok false :error "invalid request body"} 400)
-                      (intake-core! (kv/cloudflare-kv-store env) (auth/live-verifier)
-                                    (allowlist-of env) (cacao-header-of context) (js->clj body)))))
+       (-> (js/Promise.all #js [(kotobase/kotobase-kv-store-from-env! env) (body-of! context)])
+           (.then (fn [results]
+                    (let [kv-store (aget results 0)
+                          body (aget results 1)]
+                      (if-not body
+                        (auth/json-response {:ok false :error "invalid request body"} 400)
+                        (intake-core! kv-store (auth/live-verifier)
+                                      (allowlist-of env) (cacao-header-of context) (js->clj body))))))
            (.then ->js-response)
            (.catch (fn [e] (->js-response (auth/json-response {:ok false :error "request failed" :reason (ex-message e)} 500))))))))
 
@@ -205,7 +218,9 @@
    (defn on-request-get-application [context]
      (let [env (aget context "env")
            id (aget (aget context "params") "id")]
-       (-> (get-application-core! (kv/cloudflare-kv-store env) (auth/live-verifier)
-                                   (allowlist-of env) (cacao-header-of context) id)
+       (-> (kotobase/kotobase-kv-store-from-env! env)
+           (.then (fn [kv-store]
+                    (get-application-core! kv-store (auth/live-verifier)
+                                            (allowlist-of env) (cacao-header-of context) id)))
            (.then ->js-response)
            (.catch (fn [e] (->js-response (auth/json-response {:ok false :error "request failed" :reason (ex-message e)} 500))))))))
