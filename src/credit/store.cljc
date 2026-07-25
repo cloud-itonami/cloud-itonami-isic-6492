@@ -218,7 +218,17 @@
    :application/status :application/disbursement-number])
 
 (defn- pull->application [m]
-  (when (:application/id m)
+  ;; The `:application/id` guard alone is not enough to mean "found". Pulling a
+  ;; lookup ref for an entity that does not exist can come back as
+  ;; `{:application/id <the-id-just-looked-up>}` -- the lookup value echoed
+  ;; back with no other attributes -- so a miss used to build a full record of
+  ;; nils and `application` returned a map where callers test for nil. Require
+  ;; at least one attribute BESIDES the id, which is what actually
+  ;; distinguishes a stored application from an absent one: intake always
+  ;; writes an applicant and a requested-amount.
+  (when (and (:application/id m)
+             (some #(some? (get m %))
+                   (remove #{:application/id} application-pull)))
     {:id (:application/id m) :applicant (:application/applicant m)
      :requested-amount (:application/requested-amount m) :annual-income (:application/annual-income m)
      :existing-debt (:application/existing-debt m) :credit-score (:application/credit-score m)
