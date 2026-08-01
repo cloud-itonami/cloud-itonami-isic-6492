@@ -55,6 +55,36 @@ jurisdiction's liability -- the software supplies the governed, spec-
 cited, audited execution scaffold so that operator does not have to
 build the compliance layer from scratch for every new market.
 
+### Real-property-secured (mortgage) credit: the catalog can be the WRONG regime
+
+`credit.facts/catalog` is a consumer-credit table. When the credit is secured
+on real property, that table is not merely incomplete for some jurisdictions
+-- it is **the wrong regime**, and an advisor citing it for a mortgage would be
+citing a real source for the wrong thing. Two verified examples:
+
+- **JPN** -- `catalog` cites 貸金業法 and its 総量規制. 金融庁 states
+  「総量規制が適用されるのは、貸金業者から個人が借入れを行う場合です。銀行からの
+  借入れや法人名義での借入れは対象外です」, and most 住宅ローン are bank lending
+  under 銀行法, outside 貸金業法 entirely. 金融庁 further states 「住宅ローンなど、
+  一般に低金利で返済期間が長く、定型的である一部の貸付けについては、総量規制は
+  適用されません」.
+- **GBR** -- `catalog` cites the Consumer Credit Act 1974 and CONC. Since
+  2016-03-21, FCA MCOB 1.6 states that *"Virtually all agreements secured on
+  land will now be subject to MCOB"*; CONC is the residual case, not the
+  default.
+
+`credit.facts/real-property-secured-delta` records these as data, and
+`credit.facts/generic-entry-misleading-for-mortgage?` lets the Credit Governor
+hold a mortgage proposal that cites the wrong entry. A **nil** delta means only
+that no delta has been researched -- never that the generic entry applies
+unchanged.
+
+The authority for the mortgage side (procedure, security instrument, public
+support programmes, organizations, per jurisdiction) is the sibling repository
+[`cloud-itonami/mortgage-registry`](https://github.com/cloud-itonami/mortgage-registry).
+The delta table points at it rather than restating it, so the two cannot drift
+apart in silence.
+
 ### Actuation
 
 **Disbursing real loan funds is never autonomous, at any phase, by
