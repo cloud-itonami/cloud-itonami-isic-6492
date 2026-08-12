@@ -13,6 +13,14 @@
   langchain.db Datomic-API-compatible store — the kotoba-server /
   kotobase datom seam — under ClojureScript.
 
+  Since 2026-08-12 it also runs `credit.kernels.kotoba-oracle-portable-
+  test`. That is not optional decoration: the governor's rules are now
+  executed from a shipped Kotoba core, its nine flags cross as an `:i64`
+  record, and an `:i64` record FIELD is coerced differently on
+  ClojureScript than on the JVM (`js/BigInt` required, `js/Number`
+  rejected). A sibling repo shipped that exact bug green for a day. The
+  seam's own JVM test cannot see it, so the question is asked here.
+
   DELIBERATE EXCLUSION: `wasm.affordability-test` is NOT required or
   run here — it hosts wasm/affordability.wasm via kototama.tender
   (Chicory), a JVM-only WASM host with direct Java interop
@@ -32,6 +40,7 @@
             [credit.facts-test]
             [credit.governor-contract-test]
             [credit.kernels.gate-test]
+            [credit.kernels.kotoba-oracle-portable-test]
             [credit.phase-test]
             [credit.registry-test]
             [credit.store-contract-test]))
@@ -46,5 +55,6 @@
              'credit.registry-test
              'credit.phase-test
              'credit.kernels.gate-test
+             'credit.kernels.kotoba-oracle-portable-test
              'credit.governor-contract-test
              'credit.store-contract-test))

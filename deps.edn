@@ -8,7 +8,29 @@
  :deps {io.github.com-junkawasaki/langgraph-clj
         {:local/root "../../kotoba-lang/langgraph"}
         io.github.kotoba-lang/langchain-store
-        {:local/root "../../kotoba-lang/langchain-store"}}
+        {:local/root "../../kotoba-lang/langchain-store"}
+        ;; The KIR interpreter is a RUNTIME dependency, and it is not an
+        ;; implementation detail: it is what makes
+        ;; `src/credit/kernels/gate.kotoba` the thing that DECIDES.
+        ;; `credit.kernels.kotoba-oracle` executes the shipped
+        ;; `credit.kernels.gate-kir` through it, so the governor's verdict
+        ;; and the phase gate are what the `.kotoba` says rather than what a
+        ;; second copy in `.cljc` said. Portable `.cljc` -- it compiles and
+        ;; runs under `cljs.main --target node` (measured), which it has to,
+        ;; because that and the Cloudflare Worker are where this actor
+        ;; actually decides.
+        ;;
+        ;; The COMPILER stays test-only (see :test): it produced the
+        ;; artifact and never reaches a consumer.
+        ;;
+        ;; Pinned to the kir the pinned compiler emits for --
+        ;; `io.github.kotoba-lang/compiler` 806f5cef declares kotoba-kir
+        ;; d58972da. They have to match: KIR is a versioned document, and an
+        ;; interpreter reading a shape its emitter did not write is exactly
+        ;; the failure the artifact was supposed to remove.
+        io.github.kotoba-lang/kotoba-kir
+        {:git/url "https://github.com/kotoba-lang/kotoba-kir.git"
+         :git/sha "d58972da61758584a5bec0e863bcb3ea6fdd6c64"}}
  :aliases
  {;; offline workspace dev -- pin transitive langchain-clj to local checkout.
   ;; TWO distinct maven coordinates resolve to this same physical repo in
@@ -34,9 +56,24 @@
                       ;; build (see wasm/README.md) -- test-only, the actor's
                       ;; own runtime code has no wasm/host dependency.
                       io.github.kotoba-lang/kototama
-                      {:local/root "../../kotoba-lang/kototama"}}
+                      {:local/root "../../kotoba-lang/kototama"}
+                      ;; Produces `src/credit/kernels/gate_kir.cljc` (see
+                      ;; the :gen alias) and re-produces it in
+                      ;; `credit.kernels.kotoba-oracle-test` to prove what
+                      ;; shipped is what the source says. Test-only on
+                      ;; purpose: a consumer runs the artifact, never the
+                      ;; compiler. Pin and the runtime kotoba-kir pin move
+                      ;; TOGETHER -- see the :deps comment.
+                      io.github.kotoba-lang/compiler
+                      {:git/url "https://github.com/kotoba-lang/compiler.git"
+                       :git/sha "806f5cef7d5bc11ad8ec8514ad6121efc73be6c7"}}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
+  ;; Regenerate the shipped decision core. Combine with :test, which is
+  ;; where the compiler lives:
+  ;;
+  ;;   clojure -M:dev:test:gen
+  :gen {:main-opts ["-m" "credit.kernels.kotoba-oracle-gen"]}
   ;; PRIMARY gate: the portable .cljc suite under a real ClojureScript
   ;; host (runtime priority: cljs first, JVM compat). The JVM-only
   ;; wasm.affordability-test (kototama.tender/Chicory) is excluded --

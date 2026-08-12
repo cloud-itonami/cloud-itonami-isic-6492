@@ -179,6 +179,9 @@ its own capability lib.
 | `src/credit/facts.cljc` | Per-jurisdiction truth-in-lending disclosure catalog with an official spec-basis citation per entry, honest coverage reporting |
 | `src/credit/creditllm.cljc` | **Credit-LLM Advisor** -- `mock-advisor` ‖ `llm-advisor`; intake/assessment/creditworthiness-screening/approval/disbursement proposals |
 | `src/credit/governor.cljc` | **Credit Governor** -- 4 HARD checks (spec-basis · evidence-incomplete · application-not-approved · affordability-exceeded, a pure ground-truth recompute needing no proposal/stored-verdict inspection) + double-disbursement guard + 1 soft (confidence/actuation gate) |
+| `src/credit/kernels/gate.kotoba` | **The decision core, and what runs.** Governor verdict, phase table, confidence floor and affordability ceiling, in Kotoba. Compiled by `clojure -M:dev:test:gen` to `src/credit/kernels/gate_kir.cljc` (generated, do not edit) |
+| `src/credit/kernels/gate.cljc` | The host half that is not a decision: builds the proposal record the core declares, hands back an integer. Holds no rule and no threshold |
+| `src/credit/kernels/kotoba_oracle.cljc` | The seam — id → shipped artifact → execute. A missing core throws; there is no fallback |
 | `src/credit/phase.cljc` | **Phase 0→3** -- read-only → assisted intake → assisted assess → supervised (disbursement always human; application intake is the ONLY auto-eligible op, no capital risk) |
 | `src/credit/operation.cljc` | **OperationActor** -- langgraph-clj StateGraph |
 | `src/credit/sim.cljc` | demo driver |

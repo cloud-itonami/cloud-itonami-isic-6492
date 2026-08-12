@@ -1,35 +1,40 @@
 (ns credit.kernels.gate-kotoba
-  "A verified, drop-in-compatible alternative to
-  `credit.kernels.gate`'s `verdict-code`/`phase-disposition`/
-  `phase-reason` -- same signatures, decided by the compiled `.kotoba`/
-  WASM twins (`wasm/credit_verdict.kotoba`/`wasm/credit_phase.kotoba`,
-  see `wasm/README.md`) via `kototama.tender` instead of in-process
-  Clojure. ADR-2607151500 addendum 4: the same \"wire a verified drop-in
-  function without flipping the live call site\" pattern already applied
-  to `kototama.unspsc.prior-shortcut-kotoba` for the kototama-internal
-  narrow-slice port, applied here to the ORIGINAL cloud-itonami governor
-  port.
+  "A SECOND execution path for `credit.kernels.gate`'s `verdict-code`/
+  `phase-disposition`/`phase-reason` -- same signatures, decided by the
+  compiled `.kotoba`/WASM twins (`wasm/credit_verdict.kotoba`/
+  `wasm/credit_phase.kotoba`, see `wasm/README.md`) via `kototama.tender`
+  rather than in-process Clojure.
 
-  `credit.governor/check` (line ~227) calls `gate/verdict-code` directly
-  with 9 positional args; `credit.phase/gate` (lines ~103-104) calls
-  `kernel/phase-disposition` and `kernel/phase-reason` with 3 positional
-  args each -- both call sites could be pointed at this namespace's
-  functions instead with NO OTHER CHANGE (same arg order, same wire
-  codes), but that swap is NOT done here. Flipping either call site
-  means every proposal `credit.governor/check` evaluates crosses a real
-  WASM instantiation boundary in production -- a real production-
-  behavior and performance-profile change to a live decision gate, left
-  for an explicit owner decision, not an autonomous substitution (same
-  reasoning `kototama.unspsc.prior-shortcut-kotoba`'s own docstring
-  gives for `kototama.unspsc.organism`).
+  ## What this namespace is now, and what it was
+
+  Until 2026-08-12 this docstring said the swap to a `.kotoba`-decided
+  gate was NOT done, and it was right: `credit.kernels.gate` held the
+  rules and this namespace was an unused drop-in. ADR-2608120200 recorded
+  that as one of five dangerous shapes in the fleet.
+
+  The swap is now done -- but NOT through here. `credit.kernels.gate`
+  delegates to `src/credit/kernels/gate.kotoba`, compiled to KIR, shipped
+  as `credit.kernels.gate-kir`, executed through
+  `credit.kernels.kotoba-oracle`. The reasons are in that namespace's
+  docstring and they are about WHERE this actor decides: the governor is
+  reached from a Cloudflare Worker and from `cljs.main`, and
+  `kototama.tender` is JVM-only (Chicory, direct Java interop). Routing
+  the live decision through here would have moved the authority onto the
+  one runtime that does not serve traffic. A `.wasm` also cannot be asked
+  for a threshold -- one entry point, inputs in linear memory -- which is
+  the specific defect that had to be closed.
+
+  So this stays as what it honestly is: an independent implementation of
+  the same rules on a different execution path, reached only from tests.
+  `credit.kernels.gate-kotoba-test` runs it against
+  `credit.kernels.gate` -- i.e. against the shipped core -- over all 52
+  battery cases, which is the check worth having from a second
+  implementation. It decides nothing in production.
 
   Requires `kototama.tender` (and therefore Chicory, transitively) on
   the classpath -- kept out of this repo's main `:deps` (only in the
-  `:test` alias today, see `deps.edn`'s own comment) so requiring
-  `credit.governor`/`credit.phase` never forces it on a consumer who
-  doesn't want the WASM-backed variant. A caller who DOES want this
-  namespace adds `io.github.kotoba-lang/kototama` to their own project
-  (or activates this repo's `:test` alias)."
+  `:test` alias, see `deps.edn`) so requiring `credit.governor`/
+  `credit.phase` never forces it on a consumer."
   (:require [clojure.java.io :as io]
             [kototama.contract :as contract]
             [kototama.tender :as tender]))
