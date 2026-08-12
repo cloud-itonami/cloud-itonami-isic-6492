@@ -1,4 +1,40 @@
-# wasm/ — kotoba-wasm deployment of the affordability check
+# wasm/ — a second execution path, not the deciding one
+
+## What actually runs (2026-08-12)
+
+**Nothing in this directory decides anything in production.**
+
+The credit governor's rules live in `src/credit/kernels/gate.kotoba`,
+compiled to KIR, shipped as `src/credit/kernels/gate_kir.cljc`, and
+executed by `credit.kernels.gate` through
+`credit.kernels.kotoba-oracle`. That is what `credit.governor/check` and
+`credit.phase/gate` decide by, on the JVM, under `cljs.main` and inside
+the Cloudflare Worker alike.
+
+The three `.kotoba`/`.wasm` pairs here are an independent implementation
+of the same rules on a different execution path (`kototama.tender`,
+JVM-only). They are reached only from tests:
+
+| file | reached by | authority |
+|---|---|---|
+| `credit_verdict.{kotoba,wasm}` | `test/wasm/credit_verdict_test.clj`, `credit.kernels.gate-kotoba` | no |
+| `credit_phase.{kotoba,wasm}` | `test/wasm/credit_phase_test.clj`, `credit.kernels.gate-kotoba` | no |
+| `affordability.{kotoba,wasm}` | `test/wasm/affordability_test.clj` | no |
+
+They are kept, not deleted, because a second implementation that agrees
+is worth having. Two gates keep them from drifting away silently:
+`credit.kernels.gate-kotoba-test` (all 52 battery cases, wasm answers vs
+the shipped core) and `credit.kernels.gate-kotoba-inline-test` (the
+literals they inline vs the thresholds the shipped artifact returns).
+
+Why the authority is KIR rather than one of these `.wasm` files is in
+`credit.kernels.kotoba-oracle`'s docstring: this actor decides inside a
+Cloudflare Worker and under ClojureScript, `kototama.tender` is JVM-only,
+and a legacy `.wasm` module cannot be asked for a threshold.
+
+---
+
+## Original scope: the affordability check
 
 `affordability.kotoba` is a port of `credit.registry/compute-debt-to-income-ratio`
 + `affordability-ceiling` (the 0.43 back-end debt-to-income ceiling, mirroring
@@ -150,10 +186,12 @@ correctly out of scope). `credit.kernels.gate.cljc` was ALREADY written in
 this "safe-kotoba subset" style (pure integer arithmetic, nested `if`, no
 keywords/maps/atoms) specifically to keep this door open without a
 rewrite — porting it required zero restructuring, only inlining its two
-named constants (`confidence-floor-x100` = 60, `affordability-ceiling-
-x100` = 43) as literals, since `kotoba-lang/kotoba`'s `wasm-binary` only
-recognizes top-level `ns`/`defn` (a plain `def` is silently ignored, not
-an error) — same convention `affordability.kotoba` already established.
+named constants (`confidence-floor-x100`, `affordability-ceiling-x100`)
+as literals, since `kotoba-lang/kotoba`'s `wasm-binary` only recognizes
+top-level `ns`/`defn` (a plain `def` is silently ignored, not an error) —
+same convention `affordability.kotoba` already established. **That
+inlining is the defect ADR-2608120200 recorded**, and it is why the
+authority moved elsewhere; see "What actually runs" at the top.
 
 Two files, not one, because a `kotoba-lang/kotoba` wasm module exports
 exactly one entry point (`main`) — `credit_verdict.kotoba` covers the

@@ -1,12 +1,18 @@
 (ns credit.kernels.gate-kotoba-test
   "Proves credit.kernels.gate-kotoba's WASM-backed verdict-code/
-  phase-disposition/phase-reason agree with credit.kernels.gate's own
-  in-process functions on EVERY case in gate.cljc's own executable
-  `battery` -- the same 52 cases wasm.credit-verdict-test/wasm.credit-
-  phase-test already verify against the raw compiled module directly;
-  this test instead calls gate-kotoba's own drop-in-compatible function
-  signatures, exercising the exact call shape credit.governor/credit.phase
-  would use if either were ever pointed at this namespace."
+  phase-disposition/phase-reason agree with `credit.kernels.gate` on
+  EVERY case in its executable `battery` -- the same 52 cases
+  wasm.credit-verdict-test/wasm.credit-phase-test verify against the raw
+  compiled module directly; this test calls gate-kotoba's own drop-in-
+  compatible function signatures.
+
+  What it compares changed on 2026-08-12 without a line of it moving.
+  `credit.kernels.gate` used to hold the rules in Clojure, so this was
+  two implementations checking each other. It now executes the shipped
+  KIR (`credit.kernels.kotoba-oracle`), so this is the LEGACY wasm path
+  checked against the AUTHORITY -- and that is the reading to keep: the
+  wasm modules are non-authoritative, and agreement is what makes them
+  worth keeping rather than what makes them correct."
   (:require [clojure.test :refer [deftest is testing]]
             [credit.kernels.gate :as gate]
             [credit.kernels.gate-kotoba :as gate-kotoba]))

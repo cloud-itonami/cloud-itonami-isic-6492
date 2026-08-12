@@ -1,0 +1,166 @@
+;; The credit governor's decision core.
+;;
+;; This file is not a copy of `credit/kernels/gate.cljc` kept honest by a
+;; test. It is what that namespace RUNS: it is compiled to KIR by
+;; `credit.kernels.kotoba-oracle-gen`, the KIR ships as
+;; `src/credit/kernels/gate_kir.cljc`, and `credit.kernels.gate` executes
+;; that artifact through `credit.kernels.kotoba-oracle`. Change a rule here
+;; and regenerate, and the governor decides differently. Change a rule here
+;; and DON'T regenerate, and `credit.kernels.kotoba-oracle-test` says so.
+;;
+;; Written in the `kotoba compile` dialect (typed parameters, `:export`,
+;; `:schemas`), not the legacy `kotoba wasm emit` subset the three files
+;; under `wasm/` use. Two consequences that shape everything below:
+;;
+;;   * The thresholds are FUNCTIONS, not literals. The legacy subset has no
+;;     top-level `def`, which is why `wasm/credit_verdict.kotoba` writes
+;;     both thresholds straight into its expressions and why nothing
+;;     propagated an edit to them. A 0-arity export is the same value with a name, and it
+;;     is a name the host can ASK FOR — `credit.kernels.gate` no longer
+;;     declares either number.
+;;
+;;   * `verdict-code` takes one record, not nine parameters. The compiler's
+;;     `max-parameters` is 5 (measured on compiler pin 806f5ce), and nine
+;;     flags are one decision's worth of data, so they cross as one small
+;;     fixed record — the shape ADR-2608112100 measured as delegable. The
+;;     field ORDER is declared once here and read back out of the artifact
+;;     by the host; it is not written down a second time.
+;;
+;; Wire codes, fail-closed directions and branch order are the contract
+;; `credit.kernels.gate`'s own docstring states in full; this file is where
+;; they are enforced.
+
+(ns credit.kernels.gate
+  (:schemas {:credit.kernels/proposal
+             [:record :credit.kernels/proposal
+              [[:spec-missing :i64]
+               [:evidence-incomplete :i64]
+               [:not-approved :i64]
+               [:double-disb :i64]
+               [:afford-applicable :i64]
+               [:afford-total :i64]
+               [:afford-income :i64]
+               [:confidence-x100 :i64]
+               [:actuation :i64]]]})
+  (:export [confidence-floor-x100 affordability-ceiling-x100
+            norm-flag confidence-low affordability-exceeded hard-violation
+            verdict-code
+            op-write-enabled op-auto-enabled phase-disposition phase-reason]))
+
+;; --------------------------- thresholds ----------------------------
+
+;; The advisor confidence below which a human has to look, x100.
+(defn confidence-floor-x100 [] :i64 60)
+
+;; The back-end debt-to-income ceiling, x100. Compared EXACTLY in
+;; integers as 100*total > ceiling*income, so no floating-point ratio
+;; ever enters the decision.
+(defn affordability-ceiling-x100 [] :i64 43)
+
+;; --------------------------- combinators ---------------------------
+
+;; Fail-closed flag normalization: only exact 0 counts as "no".
+(defn norm-flag [a :i64] :i64 (if (= a 0) 0 1))
+
+(defn or2 [a :i64 b :i64] :i64 (if (= a 1) 1 (if (= b 1) 1 0)))
+
+;; --------------------------- governor core -------------------------
+
+;; 1 when the advisor confidence requires a human look. Out-of-range
+;; values (negative, or above 100) are treated as LOW -- an advisor
+;; reporting impossible confidence is a reason for MORE scrutiny, not
+;; auto-commit.
+(defn confidence-low [x100 :i64] :i64
+  (if (< x100 0)
+    1
+    (if (< 100 x100)
+      1
+      (if (< x100 (confidence-floor-x100)) 1 0))))
+
+;; 1 when the application's back-end debt-to-income ratio strictly
+;; exceeds the ceiling. `applicable` is 0 when the op carries no
+;; affordability check (norm-flag, fail-closed). Non-positive income or
+;; negative total would bypass the ceiling, so they count as exceeded.
+(defn affordability-exceeded [applicable :i64 total :i64 income :i64] :i64
+  (if (= (norm-flag applicable) 0)
+    0
+    (if (< income 1)
+      1
+      (if (< total 0)
+        1
+        (if (< (* (affordability-ceiling-x100) income) (* 100 total)) 1 0)))))
+
+;; 1 when any HARD (human-un-overridable) violation is present:
+;; spec-basis missing / required lending evidence incomplete /
+;; application never approved / double disbursement / debt-to-income
+;; affordability ceiling exceeded.
+(defn hard-violation [proposal [:ref :credit.kernels/proposal]] :i64
+  (or2 (or2 (or2 (norm-flag (record-get [:ref :credit.kernels/proposal]
+                                        proposal :spec-missing))
+                 (norm-flag (record-get [:ref :credit.kernels/proposal]
+                                        proposal :evidence-incomplete)))
+            (or2 (norm-flag (record-get [:ref :credit.kernels/proposal]
+                                        proposal :not-approved))
+                 (norm-flag (record-get [:ref :credit.kernels/proposal]
+                                        proposal :double-disb))))
+       (affordability-exceeded
+         (record-get [:ref :credit.kernels/proposal] proposal :afford-applicable)
+         (record-get [:ref :credit.kernels/proposal] proposal :afford-total)
+         (record-get [:ref :credit.kernels/proposal] proposal :afford-income))))
+
+;; Governor verdict: 2 hard-hold wins over 1 escalate wins over 0 ok.
+(defn verdict-code [proposal [:ref :credit.kernels/proposal]] :i64
+  (if (= 1 (hard-violation proposal))
+    2
+    (if (= 1 (or2 (confidence-low (record-get [:ref :credit.kernels/proposal]
+                                              proposal :confidence-x100))
+                  (norm-flag (record-get [:ref :credit.kernels/proposal]
+                                         proposal :actuation))))
+      1
+      0)))
+
+;; ---------------------------- phase core ---------------------------
+
+;; 1 when `op` may WRITE at `phase` (phase table row, :writes column).
+(defn op-write-enabled [phase :i64 op :i64] :i64
+  (if (= phase 1)
+    (if (= op 1) 1 0)
+    (if (= phase 2)
+      (if (= op 1) 1 (if (= op 2) 1 (if (= op 3) 1 0)))
+      (if (= phase 3)
+        (if (= op 1) 1 (if (= op 2) 1 (if (= op 3) 1 (if (= op 4) 1 (if (= op 5) 1 0)))))
+        0))))
+
+;; 1 when `op` may AUTO-COMMIT at `phase` (phase table row, :auto
+;; column). Exactly one cell is ever 1: phase 3 x :application/intake.
+;; op 5 (:loan/disburse) AND op 4 (:loan/approve) are 0 at every phase
+;; -- permanent structural facts, not rollout milestones.
+(defn op-auto-enabled [phase :i64 op :i64] :i64
+  (if (= phase 3) (if (= op 1) 1 0) 0))
+
+;; Governor hold always wins; reads pass through; a write not enabled at
+;; this phase holds; a governor-clean write without auto rights
+;; escalates; otherwise the governor's disposition stands.
+(defn phase-disposition [phase :i64 op :i64 governor-disposition :i64] :i64
+  (if (= governor-disposition 2)
+    2
+    (if (= op 0)
+      governor-disposition
+      (if (= 0 (op-write-enabled phase op))
+        2
+        (if (= governor-disposition 0)
+          (if (= 1 (op-auto-enabled phase op)) 0 1)
+          governor-disposition)))))
+
+;; Reason code companion of `phase-disposition` (same branch order):
+;; 0 none, 1 phase-disabled, 2 phase-approval.
+(defn phase-reason [phase :i64 op :i64 governor-disposition :i64] :i64
+  (if (= governor-disposition 2)
+    0
+    (if (= op 0)
+      0
+      (if (= 0 (op-write-enabled phase op))
+        1
+        (if (= governor-disposition 0)
+          (if (= 1 (op-auto-enabled phase op)) 0 2)
+          0)))))
