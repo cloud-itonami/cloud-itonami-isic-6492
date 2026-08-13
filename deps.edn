@@ -49,6 +49,22 @@
          {:local/root "../../kotoba-lang/langchain"}}}
   ;; clojure -M:dev:run  -> drive the demo through one OperationActor
   :run {:main-opts ["-m" "credit.sim"]}
+  ;; clojure -M:dev:render-html [out-file] -> regenerate
+  ;; docs/samples/operator-console.html by driving the REAL actor
+  ;; (credit.operation -> credit.governor -> credit.store) and rendering
+  ;; what that run produced. Flagship checklist item 2, ADR-2607189300.
+  ;;
+  ;; jp-go-digital-design-system (DADS) supplies the console's CSS:
+  ;; `jp-go-dds.skin/dds+skin` is the compat skin (vendored dds.css then
+  ;; the skin rules) so the console's plain semantic markup picks up the
+  ;; workspace design system instead of hand-rolling a second one. It is
+  ;; scoped to THIS alias -- a build-time renderer dependency that no
+  ;; runtime consumer of this actor ever loads. Pinned by git sha, the
+  ;; same sha the sibling consoles in this fleet pin.
+  :render-html {:extra-deps {io.github.kotoba-lang/jp-go-digital-design-system
+                             {:git/url "https://github.com/kotoba-lang/jp-go-digital-design-system"
+                              :git/sha "83db99546eabc53613ae826ea41d1533a3c574af"}}
+                :main-opts ["-m" "credit.render-html"]}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
                       {:git/tag "v0.5.1" :git/sha "dfb30dd"}
