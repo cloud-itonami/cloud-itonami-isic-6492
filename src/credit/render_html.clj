@@ -420,7 +420,13 @@
          (str "<code>" (esc (:op f)) "</code>")
          (str "<code>" (esc (:subject f)) "</code>")
          (esc (kw-str (:disposition f)))
-         (esc (str/join ", " (map #(if (keyword? %) (kw-str %) (str %)) (:basis f))))
+         ;; An EMPTY basis is meaningful, not missing data: it is what a
+         ;; rollout-phase hold looks like (the governor found nothing to
+         ;; cite). Render it as a dash rather than a blank cell so the
+         ;; row cannot be read as truncated output.
+         (if (seq (:basis f))
+           (esc (str/join ", " (map #(if (keyword? %) (kw-str %) (str %)) (:basis f))))
+           "<span class=\"muted\">&mdash;</span>")
          (or (some-> (:summary f) esc)
              (some-> (:phase-reason f) kw-str esc)
              "<span class=\"muted\">&mdash;</span>"))))
