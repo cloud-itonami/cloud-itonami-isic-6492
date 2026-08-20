@@ -24,7 +24,7 @@
         ;; artifact and never reaches a consumer.
         ;;
         ;; Pinned to the kir the pinned compiler emits for --
-        ;; `io.github.kotoba-lang/compiler` 806f5cef declares kotoba-kir
+        ;; `io.github.kotoba-lang/amu` 806f5cef declares kotoba-kir
         ;; d58972da. They have to match: KIR is a versioned document, and an
         ;; interpreter reading a shape its emitter did not write is exactly
         ;; the failure the artifact was supposed to remove.
@@ -80,8 +80,8 @@
                       ;; purpose: a consumer runs the artifact, never the
                       ;; compiler. Pin and the runtime kotoba-kir pin move
                       ;; TOGETHER -- see the :deps comment.
-                      io.github.kotoba-lang/compiler
-                      {:git/url "https://github.com/kotoba-lang/compiler.git"
+                      io.github.kotoba-lang/amu
+                      {:git/url "https://github.com/kotoba-lang/amu.git"
                        :git/sha "806f5cef7d5bc11ad8ec8514ad6121efc73be6c7"}}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
