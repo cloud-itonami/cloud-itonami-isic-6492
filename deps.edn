@@ -43,8 +43,7 @@
   ;; `langchain/kotoba_db.cljc` predating `kotoba-api-async` instead of
   ;; this local checkout's copy.
   :dev {:override-deps
-        {io.github.com-junkawasaki/langchain-clj
-         {:local/root "../../kotoba-lang/langchain"}
+        {
          io.github.kotoba-lang/langchain
          {:local/root "../../kotoba-lang/langchain"}}}
   ;; clojure -M:dev:run  -> drive the demo through one OperationActor
