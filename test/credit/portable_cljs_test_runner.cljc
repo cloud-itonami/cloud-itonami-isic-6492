@@ -30,12 +30,38 @@
   kernel restates the same exact-integer ceiling comparison the
   `.kotoba` guest makes).
 
-  Invoke from the repo root (the :test alias's :main-opts would steal
-  -m if combined, hence -Sdeps for the extra path):
+  Invoke from the repo root. COMPILE, then run the bundle with node --
+  do not use `cljs.main -m` (see EXIT CODE below):
 
-    clojure -Sdeps '{:paths [\"src\" \"test\"]}' \\
-      -M:dev:cljs -m cljs.main --target node \\
-      -m credit.portable-cljs-test-runner"
+    clojure -Sdeps '{:paths [\"src\" \"test\"]}' -M:dev:cljs -m cljs.main \\
+      --target node --output-dir target/node-out \\
+      --output-to target/portable-tests.cjs \\
+      -c credit.portable-cljs-test-runner
+    echo '{\"type\":\"commonjs\"}' > target/node-out/package.json
+    node target/portable-tests.cjs
+
+  EXIT CODE. The two-step above exists because `cljs.main ... -m
+  credit.portable-cljs-test-runner` evaluates -main inside a node REPL
+  environment, and that host process exits 0 no matter what the tests
+  did. Measured 2026-08-25: one deliberately broken assertion, run that
+  way, printed `1 failures` and exited 0. `set!`-ing `js/process.exitCode`
+  from :end-run-tests -- which this runner did, and which reads like a
+  working failure signal -- cannot survive that, and calling
+  `js/process.exit` hangs the driver instead. So for as long as this
+  file has existed, its own failure signal has been unreadable by any
+  caller that checks `$?`: the ADR-2608136000 shape, a check that could
+  not report failure returning the same value as one that passed.
+
+  The compiled bundle is an ordinary node program, so `process.exitCode`
+  works there. Verified in BOTH directions on 2026-08-25: unmodified,
+  63 tests / 641 assertions / 0 failures / exit 0; with one assertion
+  broken INSIDE an async callback (the case that lands after run-tests
+  has already returned), `1 failures` and exit 1.
+
+  The `package.json` line is not incidental. This repo's package.json
+  says `\"type\": \"module\"`, which makes node read every emitted .js
+  under target/node-out as ESM and die on Closure's `require`. The
+  marker file scopes those back to CommonJS."
   (:require [clojure.test :as t :refer [run-tests]]
             [credit.facts-test]
             [credit.governor-contract-test]
@@ -43,6 +69,7 @@
             [credit.kernels.kotoba-oracle-portable-test]
             [credit.phase-test]
             [credit.registry-test]
+            [credit.edge.auth-test]
             [credit.edge.caller-allowlist-test]
             [credit.store-contract-test]
             [credit.store-numeric-identity-test]
@@ -67,9 +94,14 @@
     credit.edge.kv-store-test        4 /   4 /  3 failures
     credit.edge.kotobase-store-test  4 /   8 /  7 errors
     credit.edge.loan-endpoints-test  8 /  20 / 18 failures, 1 error
-  同じ 4 つが JVM では通る（全体で 111 tests / 877 assertions / 0 failures）。"
-  '{credit.edge.auth-test            "promise-like を同期的に分配束縛している"
-    credit.edge.kv-store-test        "同上"
+  同じ 4 つが JVM では通る（全体で 111 tests / 877 assertions / 0 failures）。
+
+  **`credit.edge.auth-test` は 2026-08-25 に書き直して除外を解いた。** 6 本とも
+  `awaiting`（`:clj` では `(f p)`、`:cljs` では `cljs.test/async`）を通すので、
+  両 runtime で同じ assertion が走る。JVM 側は 111/877/0 のまま動かない。
+  残る 3 つは同じ書き換えを待っている —— 除外は理由が真である間だけ有効で、
+  下の再検査がそれを毎回確かめる。"
+  '{credit.edge.kv-store-test        "promise-like を同期的に分配束縛している"
     credit.edge.kotobase-store-test  "同上"
     credit.edge.loan-endpoints-test  "同上"})
 
@@ -98,4 +130,11 @@
              'credit.governor-contract-test
              'credit.store-contract-test
              'credit.store-numeric-identity-test
+             'credit.edge.auth-test
              'credit.edge.caller-allowlist-test))
+
+;; The compiled node bundle runs `cljs.nodejscli`, which calls whatever
+;; `*main-cli-fn*` names. Without this the bundle loads every namespace,
+;; runs no test, and exits 0 -- measured 2026-08-25, and indistinguishable
+;; from a clean run in both the output and the exit code.
+#?(:cljs (set! *main-cli-fn* -main))
