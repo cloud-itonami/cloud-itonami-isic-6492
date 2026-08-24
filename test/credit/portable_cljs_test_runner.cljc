@@ -43,12 +43,51 @@
             [credit.kernels.kotoba-oracle-portable-test]
             [credit.phase-test]
             [credit.registry-test]
-            [credit.store-contract-test]))
+            [credit.edge.caller-allowlist-test]
+            [credit.store-contract-test]
+            [credit.store-numeric-identity-test]
+            [credit.edge.pcompat :as pc]))
+
+(def excluded
+  "namespace -> なぜこの runner に載せないか。
+
+  4 つとも `.cljc` で、**JVM では通り ClojureScript では落ちる**。原因は 1 つで、
+  ソースではなくテスト側にある: `credit.edge.*` の関数は ns docstring どおり
+  promise-like を返し、`credit.edge.pcompat/resolved` は
+  `#?(:cljs (js/Promise.resolve v) :clj v)` である。テストは戻り値をその場で
+  分配束縛しており、JVM ではそれが値なので通り、ClojureScript では Promise
+  なので `:ok?` も `:status` も nil になる。
+
+  直すにはこの 4 namespace を `cljs.test/async` + `pc/then` に書き直す必要が
+  あり、それはテストの書き換えであってこの runner の一行では済まない。
+  ここに書いておくのは、走らないことが忘れられないようにするためである。
+
+  実測 2026-08-25、走らせたときの内訳:
+    credit.edge.auth-test            6 tests /  14 assertions / 13 failures
+    credit.edge.kv-store-test        4 /   4 /  3 failures
+    credit.edge.kotobase-store-test  4 /   8 /  7 errors
+    credit.edge.loan-endpoints-test  8 /  20 / 18 failures, 1 error
+  同じ 4 つが JVM では通る（全体で 111 tests / 877 assertions / 0 failures）。"
+  '{credit.edge.auth-test            "promise-like を同期的に分配束縛している"
+    credit.edge.kv-store-test        "同上"
+    credit.edge.kotobase-store-test  "同上"
+    credit.edge.loan-endpoints-test  "同上"})
 
 #?(:cljs
    (defmethod t/report [:cljs.test/default :end-run-tests] [m]
      (when-not (t/successful? m)
        (set! (.-exitCode js/process) 1))))
+
+;; 除外の再検査。理由は「cljs では pcompat/resolved が Promise を返すから
+;; 同期的な分配束縛が効かない」なので、それが今も真かをここで確かめる。
+;; pcompat が cljs でも同期値を返すようになるか、テストが async に書き直されたら、
+;; この entry は成り立たなくなる。
+#?(:cljs
+   (when-not (instance? js/Promise (pc/resolved {:ok? true}))
+     (println (str "STALE EXCLUSION: credit.edge.* を除外している理由は "
+                   "pcompat/resolved が cljs で Promise を返すことだが、"
+                   "もうそうではない。entry を退役させて suite に入れること。"))
+     (set! (.-exitCode js/process) 1)))
 
 (defn -main []
   (run-tests 'credit.facts-test
@@ -57,4 +96,6 @@
              'credit.kernels.gate-test
              'credit.kernels.kotoba-oracle-portable-test
              'credit.governor-contract-test
-             'credit.store-contract-test))
+             'credit.store-contract-test
+             'credit.store-numeric-identity-test
+             'credit.edge.caller-allowlist-test))
