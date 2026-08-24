@@ -5,12 +5,18 @@
   runtime, no real crypto. Runs `credit.operation/build`'s EXISTING,
   UNMODIFIED StateGraph for real (not mocked) -- this is what actually
   proves `:application/intake` reaches `:commit` immediately through
-  this HTTP surface, per `docs/adr/0002-http-edge-loan-intake.md`."
+  this HTTP surface, per `docs/adr/0002-http-edge-loan-intake.md`.
+
+  Both handlers and both KV methods return promise-like, so every call is
+  threaded through `await-helper` -- see that ns for why reading them
+  where they stand passed on the JVM and reported nil on ClojureScript."
   (:require [clojure.test :refer [deftest is testing]]
             [credit.edge.auth :as auth]
+            [credit.edge.await-helper :refer [awaiting]]
             [credit.edge.caller-allowlist :as allowlist]
             [credit.edge.kv-store :as kv]
-            [credit.edge.loan-endpoints :as ep]))
+            [credit.edge.loan-endpoints :as ep]
+            [credit.edge.pcompat :as pc]))
 
 (def caller-did "did:key:zCommitmentLedgerActor01")
 (def allow (allowlist/parse-allowlist caller-did))
@@ -23,69 +29,80 @@
 
 (deftest intake-requires-cacao
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier caller-did)
-        {:keys [status]} (ep/intake-core! kvs v allow nil intake-body)]
-    (is (= 401 status))))
+        v (auth/always-valid-verifier caller-did)]
+    (awaiting (ep/intake-core! kvs v allow nil intake-body)
+              (fn [{:keys [status]}] (is (= 401 status))))))
 
 (deftest intake-requires-allowlist-membership
   (testing "a validly-signed CACAO from an UNLISTED caller is still forbidden"
     (let [kvs (kv/mem-kv-store)
-          v (auth/always-valid-verifier "did:key:zSomeRandomActor")
-          {:keys [status]} (ep/intake-core! kvs v allow "CACAO abc" intake-body)]
-      (is (= 403 status))
-      (is (empty? (kv/kv-get-application kvs "anything")) "nothing was written"))))
+          v (auth/always-valid-verifier "did:key:zSomeRandomActor")]
+      (awaiting (pc/then (ep/intake-core! kvs v allow "CACAO abc" intake-body)
+                         (fn [resp]
+                           (pc/then (kv/kv-get-application kvs "anything")
+                                    (fn [stored] [resp stored]))))
+                (fn [[{:keys [status]} stored]]
+                  (is (= 403 status))
+                  (is (nil? stored) "nothing was written"))))))
 
 (deftest intake-happy-path-reaches-commit-immediately
   (testing ":application/intake is auto-eligible at phase 3 (credit.phase) -- unlike
             commitment-ledger's :commitment/record, this reaches :commit synchronously,
             through the SAME unmodified credit.operation StateGraph"
     (let [kvs (kv/mem-kv-store)
-          v (auth/always-valid-verifier caller-did)
-          {:keys [status body]} (ep/intake-core! kvs v allow "CACAO abc" intake-body)]
-      (is (= 201 status))
-      (is (true? (:ok body)))
-      (is (string? (:id body)))
-      (is (= "commit" (:disposition body)))
-      (let [stored (kv/kv-get-application kvs (:id body))]
-        (is (= 300000 (:requested-amount stored)))
-        (is (= "JPN" (:jurisdiction stored)))
-        (is (= "acme/ramen-cart" (:borrower-org-repo stored)))
-        (is (= "working capital" (:purpose stored)))
-        (is (= :intake (:status stored)))))))
+          v (auth/always-valid-verifier caller-did)]
+      (awaiting (pc/then (ep/intake-core! kvs v allow "CACAO abc" intake-body)
+                         (fn [resp]
+                           (pc/then (kv/kv-get-application kvs (:id (:body resp)))
+                                    (fn [stored] [resp stored]))))
+                (fn [[{:keys [status body]} stored]]
+                  (is (= 201 status))
+                  (is (true? (:ok body)))
+                  (is (string? (:id body)))
+                  (is (= "commit" (:disposition body)))
+                  (is (= 300000 (:requested-amount stored)))
+                  (is (= "JPN" (:jurisdiction stored)))
+                  (is (= "acme/ramen-cart" (:borrower-org-repo stored)))
+                  (is (= "working capital" (:purpose stored)))
+                  (is (= :intake (:status stored))))))))
 
 (deftest intake-accepts-principal-synonym
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier caller-did)
-        {:keys [body]} (ep/intake-core! kvs v allow "CACAO abc" {:principal 150000 :jurisdiction "USA"})]
-    (is (= 150000 (:requested-amount (kv/kv-get-application kvs (:id body)))))))
+        v (auth/always-valid-verifier caller-did)]
+    (awaiting (pc/then (ep/intake-core! kvs v allow "CACAO abc" {:principal 150000 :jurisdiction "USA"})
+                       (fn [resp] (kv/kv-get-application kvs (:id (:body resp)))))
+              (fn [stored] (is (= 150000 (:requested-amount stored)))))))
 
 ;; ----------------------------- get-application -----------------------------
 
 (deftest get-application-requires-cacao
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier caller-did)
-        {:keys [status]} (ep/get-application-core! kvs v allow nil "loan-x")]
-    (is (= 401 status))))
+        v (auth/always-valid-verifier caller-did)]
+    (awaiting (ep/get-application-core! kvs v allow nil "loan-x")
+              (fn [{:keys [status]}] (is (= 401 status))))))
 
 (deftest get-application-requires-allowlist-membership
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier "did:key:zUnlisted")
-        {:keys [status]} (ep/get-application-core! kvs v allow "CACAO abc" "loan-x")]
-    (is (= 403 status))))
+        v (auth/always-valid-verifier "did:key:zUnlisted")]
+    (awaiting (ep/get-application-core! kvs v allow "CACAO abc" "loan-x")
+              (fn [{:keys [status]}] (is (= 403 status))))))
 
 (deftest get-application-unknown-id-is-404
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier caller-did)
-        {:keys [status]} (ep/get-application-core! kvs v allow "CACAO abc" "no-such-id")]
-    (is (= 404 status))))
+        v (auth/always-valid-verifier caller-did)]
+    (awaiting (ep/get-application-core! kvs v allow "CACAO abc" "no-such-id")
+              (fn [{:keys [status]}] (is (= 404 status))))))
 
 (deftest get-application-returns-what-was-created
   (let [kvs (kv/mem-kv-store)
-        v (auth/always-valid-verifier caller-did)
-        {:keys [body]} (ep/intake-core! kvs v allow "CACAO abc" intake-body)
-        id (:id body)
-        {:keys [status body]} (ep/get-application-core! kvs v allow "CACAO abc" id)]
-    (is (= 200 status))
-    (is (true? (:ok body)))
-    (is (= id (get-in body [:application :id])))
-    (is (= 300000 (get-in body [:application :requested-amount])))))
+        v (auth/always-valid-verifier caller-did)]
+    (awaiting (pc/then (ep/intake-core! kvs v allow "CACAO abc" intake-body)
+                       (fn [created]
+                         (let [id (:id (:body created))]
+                           (pc/then (ep/get-application-core! kvs v allow "CACAO abc" id)
+                                    (fn [fetched] [id fetched])))))
+              (fn [[id {:keys [status body]}]]
+                (is (= 200 status))
+                (is (true? (:ok body)))
+                (is (= id (get-in body [:application :id])))
+                (is (= 300000 (get-in body [:application :requested-amount])))))))
