@@ -28,8 +28,8 @@
         ;; d58972da. They have to match: KIR is a versioned document, and an
         ;; interpreter reading a shape its emitter did not write is exactly
         ;; the failure the artifact was supposed to remove.
-        io.github.kotoba-lang/kotoba-kir
-        {:git/url "https://github.com/kotoba-lang/kotoba-kir.git"
+        io.github.kotoba-lang/osaho
+        {:git/url "https://github.com/kotoba-lang/osaho.git"
          :git/sha "d58972da61758584a5bec0e863bcb3ea6fdd6c64"}}
  :aliases
  {;; offline workspace dev -- pin transitive langchain-clj to local checkout.
