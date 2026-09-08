@@ -11,7 +11,7 @@
 ;;        -> {"ok":true,"result":0|1,"affordable":bool,"input":{...}}
 
 (ns server
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             ["node:fs/promises" :refer [readFile]]
             ["node:http" :as http]
             ["node:process" :refer [argv]]

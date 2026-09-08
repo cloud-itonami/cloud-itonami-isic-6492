@@ -33,7 +33,7 @@
 ;;   or: nbb verify_node.cljs <existing-debt> <requested-amount> <annual-income>
 
 (ns verify-node
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             ["node:fs/promises" :refer [readFile]]
             ["node:process" :refer [argv]]
             ["../../../kotoba-lang/wasm-webcomponent/src/actor-host.js"

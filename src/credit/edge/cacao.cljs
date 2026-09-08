@@ -15,7 +15,7 @@
   Crypto-valid does not mean valid forever -- a temporal check (300s
   future-`iat` skew tolerance, `exp` enforced when present, 7-day max-age
   fallback when absent) is applied after crypto verify succeeds."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [credit.edge.base58 :as base58]
             [credit.edge.cbor :as cbor]))
 
