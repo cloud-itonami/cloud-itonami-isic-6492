@@ -37,7 +37,7 @@
   lender would keep, not the act of disbursing the loan itself (that
   is `credit.operation`'s `:loan/disburse`, always human-gated -- see
   README `Actuation`)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn- unsigned-certificate
   "Every certificate this actor produces is UNSIGNED -- signature is the
@@ -97,7 +97,7 @@
     (throw (ex-info "loan-disbursement: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "loan-disbursement: sequence must be >= 0" {})))
-  (let [disbursement-number (str (str/upper-case jurisdiction) "-LOAN-" (zero-pad sequence 6))
+  (let [disbursement-number (str (str/upper jurisdiction) "-LOAN-" (zero-pad sequence 6))
         record {"record_id" disbursement-number
                 "kind" "loan-disbursement-draft"
                 "application_id" application-id

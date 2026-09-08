@@ -1,5 +1,5 @@
 (ns credit.facts-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.lang.text] [clojure.test :refer [deftest is]]
             [credit.facts :as facts]))
 
 (deftest jpn-has-a-spec-basis
@@ -35,7 +35,7 @@
 (deftest every-mortgage-delta-cites-a-source
   (doseq [[iso3 delta] facts/real-property-secured-delta]
     (is (seq (:provenance delta)) (str iso3 " delta must cite a source"))
-    (is (every? #(clojure.string/starts-with? % "https://") (:provenance delta))
+    (is (every? #(kotoba.lang.text/starts-with? % "https://") (:provenance delta))
         (str iso3 " delta provenance must be https URLs"))
     (is (re-matches #"\d{4}-\d{2}-\d{2}" (str (:retrieved-at delta)))
         (str iso3 " delta must record when it was read"))
@@ -43,7 +43,7 @@
 
 (deftest mortgage-delta-defers-to-the-registry-not-restating-it
   (doseq [[_ delta] facts/real-property-secured-delta]
-    (is (clojure.string/includes?
+    (is (kotoba.lang.text/includes?
          (str (:operative-instead delta) (:operative-additionally delta))
          "mortgage-registry")
         "each delta must point at the authority instead of restating it")))
