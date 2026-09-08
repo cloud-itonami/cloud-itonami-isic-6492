@@ -5,14 +5,14 @@
   see that ns's docstring for the full reasoning (a Cloudflare Pages
   Function has no synchronous I/O primitive at all, so this targets
   `kotoba-api-async` rather than the original synchronous `kotoba-api`)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [credit.edge.pcompat :as pc]))
 
 #?(:cljs
    (defn fetch-http-fn
      [{:keys [url method headers body]}]
      (-> (js/fetch url
-                   #js {:method (str/upper-case (name (or method :post)))
+                   #js {:method (str/upper (name (or method :post)))
                         :headers (clj->js (or headers {}))
                         :body body})
          (.then (fn [resp]

@@ -32,7 +32,7 @@
   JVM-only: it compiles `.kotoba` and reads files. The shipped artifact it
   guards is portable and runs everywhere this actor decides."
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.walk :as walk]
             [credit.governor :as governor]

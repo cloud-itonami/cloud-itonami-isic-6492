@@ -9,7 +9,7 @@
   full platform-split reasoning (`:clj`-only, `resolved-mock-http-fn`,
   `mint-cacao!` here a plain counting stub not real CACAO crypto)."
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is testing]]
             [credit.edge.await-helper :refer [awaiting sequentially]]
             [credit.edge.kotobase-http :as khttp]

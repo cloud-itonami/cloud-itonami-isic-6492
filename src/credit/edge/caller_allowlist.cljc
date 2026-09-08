@@ -29,7 +29,7 @@
   operator's choice; see `wrangler.jsonc` and this repo's own `docs/
   adr/0002-http-edge-loan-intake.md`). Pure/portable -- no `js/`
   interop, directly unit-testable under `clojure -M:dev:test`."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [credit.edge.auth :as auth]))
 
 (defn parse-allowlist
