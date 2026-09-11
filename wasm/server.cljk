@@ -1,11 +1,11 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Resident HTTP host for affordability.wasm -- the cljc/Node.js (no JVM)
 ;; counterpart to verify_node.cljs, kept running as a `node:http` listener
 ;; instead of exiting after one call. Reuses the exact same actor-host.js
 ;; ABI wiring verify_node.cljs already proved works (see that file for the
 ;; ABI/priority-order rationale); this file only adds the HTTP loop.
 ;;
-;; Run: nbb server.cljs [port]   (default 8479)
+;; Run: kbb --backend sci server.cljk [port]   (default 8479)
 ;;   GET  /health                -> {"ok":true, ...}
 ;;   POST /isic-6492/affordability  body {existingDebt,requestedAmount,annualIncome}
 ;;        -> {"ok":true,"result":0|1,"affordable":bool,"input":{...}}

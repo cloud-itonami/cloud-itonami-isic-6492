@@ -8,7 +8,7 @@
       (JVM / babashka are last-resort compat, not the design target)
 
   The credit test suite is portable .cljc and runs UNCHANGED here and
-  on the JVM (`clojure -M:dev:test`, secondary compat gate). This
+  on the JVM (`kbb -M:dev:test`, secondary compat gate). This
   includes `credit.store-contract-test`, which exercises the
   langchain.db Datomic-API-compatible store — the kotoba-server /
   kotobase datom seam — under ClojureScript.
@@ -33,7 +33,7 @@
   Invoke from the repo root. COMPILE, then run the bundle with node --
   do not use `cljs.main -m` (see EXIT CODE below):
 
-    clojure -Sdeps '{:paths [\"src\" \"test\"]}' -M:dev:cljs -m cljs.main \\
+    kbb -Sdeps '{:paths [\"src\" \"test\"]}' -M:dev:cljs -m cljs.main \\
       --target node --output-dir target/node-out \\
       --output-to target/portable-tests.cjs \\
       -c credit.portable-cljs-test-runner

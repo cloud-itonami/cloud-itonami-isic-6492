@@ -105,7 +105,7 @@ is worth having, and two gates keep them from drifting away in silence.
 | `gate-kotoba-test` | the legacy `.wasm` disagreeing with the core (52 cases) |
 | `gate-kotoba-inline-test` | the legacy literals, and prose, disagreeing with the artifact's thresholds |
 
-Every one was run against a deliberate break, on `clojure -M:dev:test`
+Every one was run against a deliberate break, on `kbb -M:dev:test`
 (**106 tests / 845 assertions / 0 failures** unmutated):
 
 | mutation | result |
@@ -145,7 +145,7 @@ conversion in `oracle/record`:
 
 | runtime | result |
 |---|---|
-| `clojure -M:dev:test` | **111 tests / 877 assertions / 0 failures — green** |
+| `kbb -M:dev:test` | **111 tests / 877 assertions / 0 failures — green** |
 | `cljs.main --target node` | **errors: `value is not a signed i64`** in `battery-lock`, `confidence-floor-boundary`, `out-of-range-confidence-fails-closed` |
 
 Unmutated, both are green: JVM 111/877, ClojureScript **49 tests / 599

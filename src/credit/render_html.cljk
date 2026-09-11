@@ -49,7 +49,7 @@
   over the live registers, this section self-corrects if the store is
   later changed to retain the approver.
 
-  Usage: `clojure -M:dev:render-html [out-file]`
+  Usage: `kbb -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
   (:require [jp-go-dds.skin]
             [kotoba.lang.text :as str]
@@ -457,7 +457,7 @@
 
      "  <section class=\"card\">\n"
      "    <h2>Loan applications</h2>\n"
-     "    <p class=\"muted\">Build-time snapshot generated from <code>credit.store</code> by <code>credit.render-html</code> (<code>clojure -M:dev:render-html</code>). The debt-to-income ratio column is recomputed here by <code>credit.registry/compute-debt-to-income-ratio</code> from each application's own permanent fields — the same function the Credit Governor uses to refuse — against the <code>"
+     "    <p class=\"muted\">Build-time snapshot generated from <code>credit.store</code> by <code>credit.render-html</code> (<code>kbb -M:dev:render-html</code>). The debt-to-income ratio column is recomputed here by <code>credit.registry/compute-debt-to-income-ratio</code> from each application's own permanent fields — the same function the Credit Governor uses to refuse — against the <code>"
      (fmt3 registry/affordability-ceiling) "</code> affordability ceiling.</p>\n"
      "    <table>\n"
      "      <thead><tr><th>Application</th><th>Applicant</th><th>Jurisdiction</th><th>Requested</th><th>Annual income</th><th>Existing debt</th><th>Credit score</th><th>Debt-to-income</th><th>Status</th><th>Last op</th></tr></thead>\n"

@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Node-hosted (no JVM) execution of affordability.wasm through
 ;; kotoba-lang/wasm-webcomponent's actor-host.js port of the actor:host ABI.
 ;;
@@ -28,9 +28,9 @@
 ;; Assumes the fixed sibling-checkout layout this monorepo's west manifest
 ;; always uses (orgs/<org>/<repo>) -- not a portable npm dependency.
 ;;
-;; Run: nbb verify_node.cljs <scenario>
+;; Run: kbb --backend sci verify_node.cljk <scenario>
 ;;   scenarios: approve | reject | zero-income
-;;   or: nbb verify_node.cljs <existing-debt> <requested-amount> <annual-income>
+;;   or: kbb --backend sci verify_node.cljk <existing-debt> <requested-amount> <annual-income>
 
 (ns verify-node
   (:require [kotoba.lang.text :as str]
@@ -70,7 +70,7 @@
     :else
     (do
       (js/console.error
-       (str "usage: nbb verify_node.cljs <scenario|existing-debt requested-amount annual-income>\n"
+       (str "usage: kbb --backend sci verify_node.cljk <scenario|existing-debt requested-amount annual-income>\n"
             "scenarios: " (str/join ", " (keys scenarios))))
       (js/process.exit 64))))
 
