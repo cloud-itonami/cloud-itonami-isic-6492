@@ -3,7 +3,7 @@
 ;; algorithm UNCHANGED, from cloud-itonami-commitment-ledger's own script
 ;; of the same name (sibling actor, same fleet).
 ;;
-;; Usage:  nbb --classpath src scripts/generate-actor-identity.cljk
+;; Usage:  kbb --backend sci --classpath src scripts/generate-actor-identity.cljk
 ;;
 ;; Prints the did:key and the exportable private-key material (standard
 ;; base64) to STDOUT. NEVER writes the private key into any committed

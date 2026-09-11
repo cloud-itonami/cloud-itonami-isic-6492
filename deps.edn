@@ -44,16 +44,16 @@
   ;; coordinate, git-SHA-pinned) -- see the identical fix + full
   ;; reasoning in cloud-itonami-commitment-ledger's deps.edn (same
   ;; migration, same fleet, same dep graph shape). Without overriding
-  ;; BOTH, `clojure -M:dev:test` silently loads a STALE gitlibs-pinned
+  ;; BOTH, `kbb -M:dev:test` silently loads a STALE gitlibs-pinned
   ;; `langchain/kotoba_db.cljc` predating `kotoba-api-async` instead of
   ;; this local checkout's copy.
   :dev {:override-deps
         {
          io.github.kotoba-lang/langchain
          {:local/root "../../kotoba-lang/langchain"}}}
-  ;; clojure -M:dev:run  -> drive the demo through one OperationActor
+  ;; kbb -M:dev:run  -> drive the demo through one OperationActor
   :run {:main-opts ["-m" "credit.sim"]}
-  ;; clojure -M:dev:render-html [out-file] -> regenerate
+  ;; kbb -M:dev:render-html [out-file] -> regenerate
   ;; docs/samples/operator-console.html by driving the REAL actor
   ;; (credit.operation -> credit.governor -> credit.store) and rendering
   ;; what that run produced. Flagship checklist item 2, ADR-2607189300.
@@ -92,13 +92,13 @@
   ;; Regenerate the shipped decision core. Combine with :test, which is
   ;; where the compiler lives:
   ;;
-  ;;   clojure -M:dev:test:gen
+  ;;   kbb -M:dev:test:gen
   :gen {:main-opts ["-m" "credit.kernels.kotoba-oracle-gen"]}
   ;; PRIMARY gate: the portable .cljc suite under a real ClojureScript
   ;; host (runtime priority: cljs first, JVM compat). The JVM-only
   ;; wasm.affordability-test (kototama.tender/Chicory) is excluded --
   ;; see credit.portable-cljs-test-runner's docstring.
-  ;;   clojure -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
+  ;;   kbb -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
   ;;     -m cljs.main --target node -m credit.portable-cljs-test-runner
   ;; Also supplies shadow-cljs.edn's :edge-api build (docs/adr/0002-http-
   ;; edge-loan-intake.md) -- same pattern cloud-itonami-commitment-

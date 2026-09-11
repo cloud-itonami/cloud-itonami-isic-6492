@@ -1,7 +1,7 @@
 ;; Edge build (docs/adr/0002-http-edge-loan-intake.md) -- mirrors
 ;; cloud-itonami-commitment-ledger's own shadow-cljs.edn :edge-api build
 ;; (:target :esm, one shared bundle, thin functions/api/**.js re-export
-;; shims). REBUILD COMMAND: `npx shadow-cljs release edge-api` -- NOT
+;; shims). REBUILD COMMAND: `amu compile --target wasm32-browser edge-api` -- NOT
 ;; `compile` (same caveat that repo's shadow-cljs.edn documents: `compile`'s
 ;; dev-mode artifact imports a machine-local path and cannot load standalone
 ;; on a Cloudflare Pages Function's runtime).

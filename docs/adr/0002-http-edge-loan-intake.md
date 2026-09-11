@@ -10,7 +10,7 @@ covers only what this HTTP edge layer adds on top.
 ## Context
 
 `cloud-itonami-isic-6492` (`credit.*`) was, until now, a pure library --
-`Credit-LLM` + `Credit Governor`, tested via `clojure -M:dev:test`, no
+`Credit-LLM` + `Credit Governor`, tested via `kbb -M:dev:test`, no
 HTTP exposure at all. A sibling actor in this fleet,
 `cloud-itonami-commitment-ledger` (`commitledger.*`), needs to create a
 disbursement-side application on this actor's books after its own
@@ -128,13 +128,13 @@ add an `empty-store` export.
 
 ## Verification
 
-- `clojure -M:dev:test` -- 82 tests / 713 assertions, 0 failures, 0
+- `kbb -M:dev:test` -- 82 tests / 713 assertions, 0 failures, 0
   errors (up from the pre-existing suite; ALL prior tests, including
   the JVM-only `wasm.*` kototama/Chicory suite, pass unmodified).
-- `clojure -M:lint` -- 0 errors (17 warnings, all the same class of
+- `kbb -M:lint` -- 0 errors (17 warnings, all the same class of
   CLJS/JVM host-conditional false positive `commitledger.edge.*`'s own
   `.clj-kondo/config.edn` already documents and downgrades to warning).
-- `npx shadow-cljs release edge-api` compiles cleanly.
+- `amu compile --target wasm32-browser edge-api` compiles cleanly.
 - Deployed live to a NEW Cloudflare Pages project (`cloud-itonami-
   isic-6492`, `https://cloud-itonami-isic-6492.pages.dev`) with a NEW,
   dedicated KV namespace (`ISIC6492_LOAN_KV`) -- never reuses

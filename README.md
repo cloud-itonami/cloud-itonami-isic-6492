@@ -127,9 +127,9 @@ past; a clean disbursement proposal still always routes to a human.
 ## Run
 
 ```bash
-clojure -M:dev:run     # walk one clean intake-through-disbursement lifecycle + four HARD-hold cases through the actor
-clojure -M:dev:test    # governor contract · phase invariants · store parity · registry conformance · facts coverage
-clojure -M:lint        # clj-kondo (errors fail; CI mirrors this)
+kbb -M:dev:run     # walk one clean intake-through-disbursement lifecycle + four HARD-hold cases through the actor
+kbb -M:dev:test    # governor contract · phase invariants · store parity · registry conformance · facts coverage
+kbb -M:lint        # clj-kondo (errors fail; CI mirrors this)
 ```
 
 ## Robotics premise
@@ -179,7 +179,7 @@ its own capability lib.
 | `src/credit/facts.cljk` | Per-jurisdiction truth-in-lending disclosure catalog with an official spec-basis citation per entry, honest coverage reporting |
 | `src/credit/creditllm.cljk` | **Credit-LLM Advisor** -- `mock-advisor` ‖ `llm-advisor`; intake/assessment/creditworthiness-screening/approval/disbursement proposals |
 | `src/credit/governor.cljk` | **Credit Governor** -- 4 HARD checks (spec-basis · evidence-incomplete · application-not-approved · affordability-exceeded, a pure ground-truth recompute needing no proposal/stored-verdict inspection) + double-disbursement guard + 1 soft (confidence/actuation gate) |
-| `src/credit/kernels/gate.kotoba` | **The decision core, and what runs.** Governor verdict, phase table, confidence floor and affordability ceiling, in Kotoba. Compiled by `clojure -M:dev:test:gen` to `src/credit/kernels/gate_kir.cljk` (generated, do not edit) |
+| `src/credit/kernels/gate.kotoba` | **The decision core, and what runs.** Governor verdict, phase table, confidence floor and affordability ceiling, in Kotoba. Compiled by `kbb -M:dev:test:gen` to `src/credit/kernels/gate_kir.cljk` (generated, do not edit) |
 | `src/credit/kernels/gate.cljk` | The host half that is not a decision: builds the proposal record the core declares, hands back an integer. Holds no rule and no threshold |
 | `src/credit/kernels/kotoba_oracle.cljk` | The seam — id → shipped artifact → execute. A missing core throws; there is no fallback |
 | `src/credit/phase.cljk` | **Phase 0→3** -- read-only → assisted intake → assisted assess → supervised (disbursement always human; application intake is the ONLY auto-eligible op, no capital risk) |

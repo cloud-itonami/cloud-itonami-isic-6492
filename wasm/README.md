@@ -116,8 +116,8 @@ Run locally:
 
 ```sh
 cd wasm && npm install   # once, installs nbb into wasm/node_modules
-nbb verify_node.cljs approve        # or: reject | zero-income
-nbb verify_node.cljs 500000 2000000 6000000   # raw existing-debt/requested-amount/annual-income
+kbb --backend sci verify_node.cljk approve        # or: reject | zero-income
+kbb --backend sci verify_node.cljk 500000 2000000 6000000   # raw existing-debt/requested-amount/annual-income
 ```
 
 (needs the sibling checkout `orgs/kotoba-lang/wasm-webcomponent` present,
@@ -136,7 +136,7 @@ reinstalled or removed here).
 ## Resident HTTP host (`server.cljs`) — replaces `asher`'s Rust `kotoba-server`
 
 `server.cljs` wraps the same `actor-host.js` ABI `verify_node.cljs` uses in
-a persistent `node:http` listener (`nbb server.cljs [port]`, default 8479)
+a persistent `node:http` listener (`kbb --backend sci server.cljk [port]`, default 8479)
 instead of a one-shot CLI call:
 
 - `GET /health` — liveness probe.
@@ -203,14 +203,14 @@ structure one-for-one, so rather than duplicate `op-write-enabled`/
 value: `10*disposition + reason`, unpacked by the host via `quot`/`rem`).
 See each file's own `ns` docstring for the exact memory-offset ABI.
 
-**Verified two ways**: (1) `clojure -M:test` — `test/wasm/
+**Verified two ways**: (1) `kbb -M:test` — `test/wasm/
 credit_verdict_test.clj` and `test/wasm/credit_phase_test.cljk` host the
 compiled `.wasm` via `kototama.tender` (same pattern as `wasm.
 affordability-test`), with every case copied verbatim from `credit.
 kernels.gate.cljc`'s own executable `battery` (52 cases: 21 verdict + 10
 afford + 21 phase) — **57 tests / 596 assertions total, 0 failures**
 (the existing suite, including `credit.kernels.gate-test`'s own in-process
-battery run, is unaffected). `clojure -M:lint`: 0 errors, 0 warnings.
+battery run, is unaffected). `kbb -M:lint`: 0 errors, 0 warnings.
 (2) Independently, before committing, both `.kotoba` sources were compiled
 and run through `kotoba-lang/kotoba`'s own real `wasm-binary` + Chicory
 execution pipeline directly (not via `kototama.tender`) against the same
@@ -264,7 +264,7 @@ call site).
 WASM-backed ones with the exact same 52-case battery
 (`credit.kernels.gate.cljc`'s own `battery`) and asserts three-way
 agreement (expected value == in-process == WASM-backed) on every case.
-`clojure -M:test`: 59 tests / 659 assertions, 0 failures.
+`kbb -M:test`: 59 tests / 659 assertions, 0 failures.
 
 Requires `kototama.tender` (and Chicory, transitively) on the classpath
 — kept out of this repo's main `:deps` (only in the `:test` alias, same

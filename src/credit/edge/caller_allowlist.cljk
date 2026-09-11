@@ -28,7 +28,7 @@
   `env.KNOWN_CALLER_DIDS` (a Cloudflare Pages secret or plain var --
   operator's choice; see `wrangler.jsonc` and this repo's own `docs/
   adr/0002-http-edge-loan-intake.md`). Pure/portable -- no `js/`
-  interop, directly unit-testable under `clojure -M:dev:test`."
+  interop, directly unit-testable under `kbb -M:dev:test`."
   (:require [kotoba.lang.text :as str]
             [credit.edge.auth :as auth]))
 

@@ -27,7 +27,7 @@ For a standalone fork, update `deps.edn` to use git coordinates instead of `:loc
 Walk one complete loan-application lifecycle (intake → assessment → screening → approval → disbursement) and four hard-hold cases:
 
 ```bash
-clojure -M:dev:run
+kbb -M:dev:run
 ```
 
 This invokes the demo driver (`src/credit/sim.cljk`), which seeds a test application and runs it through the OperationActor under the Credit Governor. Output logs each phase transition and governor decision.
@@ -37,7 +37,7 @@ This invokes the demo driver (`src/credit/sim.cljk`), which seeds a test applica
 Execute the full test suite (governor contract, phase invariants, store parity, registry conformance, facts coverage):
 
 ```bash
-clojure -M:dev:test
+kbb -M:dev:test
 ```
 
 This uses Cognitect's test runner and executes all tests in `test/credit/`.
@@ -46,7 +46,7 @@ This uses Cognitect's test runner and executes all tests in `test/credit/`.
 The core actor code is written in `.cljc` (portable Clojure) and must pass under ClojureScript as well:
 
 ```bash
-clojure -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
+kbb -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
   -m cljs.main --target node -m credit.portable-cljs-test-runner
 ```
 
@@ -55,7 +55,7 @@ clojure -Sdeps '{:paths ["src" "test"]}' -M:dev:cljs \
 Static analysis with clj-kondo:
 
 ```bash
-clojure -M:lint
+kbb -M:lint
 ```
 
 ## Core modules

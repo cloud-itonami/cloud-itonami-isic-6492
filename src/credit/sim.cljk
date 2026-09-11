@@ -1,5 +1,5 @@
 (ns credit.sim
-  "Demo driver -- `clojure -M:dev:run`. Walks a clean application
+  "Demo driver -- `kbb -M:dev:run`. Walks a clean application
   through intake -> jurisdiction truth-in-lending assessment ->
   creditworthiness screening -> loan approval -> loan-disbursement
   proposal (always escalates) -> human approval -> commit, then shows

@@ -75,7 +75,7 @@
         (is (= (renumber-gensyms fresh) (renumber-gensyms shipped))
             (str "the shipped decision core for " id " is not " source
                  " compiled -- either the source changed without"
-                 " `clojure -M:dev:test:gen`, or the artifact was edited."
+                 " `kbb -M:dev:test:gen`, or the artifact was edited."
                  " The deployed rules are whichever one is in the"
                  " artifact."))))))
 

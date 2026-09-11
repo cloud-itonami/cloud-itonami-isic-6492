@@ -37,9 +37,9 @@ Same consequences as commitment-ledger's ADR-0004 (see that repo's ADR for the f
 
 ## Verification
 
-- `clojure -M:dev:test`: 89 tests / 739 assertions (up from 82/713), 0 failures.
-- `clojure -M:lint`: 0 errors (17 pre-existing-shaped warnings).
-- `npx shadow-cljs release edge-api`: compiles cleanly.
+- `kbb -M:dev:test`: 89 tests / 739 assertions (up from 82/713), 0 failures.
+- `kbb -M:lint`: 0 errors (17 pre-existing-shaped warnings).
+- `amu compile --target wasm32-browser edge-api`: compiles cleanly.
 - Live: deployed to Cloudflare Pages Production (branch `main`). `POST /api/loan/intake` exercised indirectly via commitment-ledger's own live `:commit`-node fire-and-forget call (the SAME cross-actor wiring ADR-2607242200 already established) using commitment-ledger's real, allow-listed self-mint identity -- proving a real loan application landed on this actor's own kotobase.net-backed store via the real production wiring, not a simulation.
 
 ## References
