@@ -33,7 +33,7 @@ independent governance" invariant.
 
 ### Decision 1: intake + read only, by construction
 
-`src/credit/edge/loan_endpoints.cljc` exposes exactly two routes:
+`src/credit/edge/loan_endpoints.cljk` exposes exactly two routes:
 `POST /api/loan/intake` (create, runs the EXISTING, UNMODIFIED
 `credit.operation/build` StateGraph for `:application/intake`, which
 per `credit.phase` auto-commits when the Governor is clean) and
@@ -44,7 +44,7 @@ permanent, structural scope boundary, not a phase-1 rollout milestone.
 
 ### Decision 2: a NEW, edge-layer-specific allow-list check, separate from `credit.governor`
 
-`src/credit/edge/caller_allowlist.cljc` is a HARD check requiring the
+`src/credit/edge/caller_allowlist.cljk` is a HARD check requiring the
 verified CACAO's `iss` (a did:key) to be a member of a configured
 allow-list (`env.KNOWN_CALLER_DIDS`, comma-separated). This is
 DELIBERATELY separate from `credit.governor`'s existing 5 checks (not
@@ -88,7 +88,7 @@ shape `cloud-itonami-commitment-ledger`'s own end-to-end proof uses).
 
 ### Decision 5: simpler KV persistence than commitment-ledger's own -- deliberately, given the narrower exposed op surface
 
-`src/credit/edge/kv_store.cljc` mirrors `commitledger.edge.kv-store`'s
+`src/credit/edge/kv_store.cljk` mirrors `commitledger.edge.kv-store`'s
 protocol + Mem/Cloudflare split PATTERN, but is deliberately simpler:
 no `ledger-state` cross-application aggregate, no `index` key. Every
 Governor check this edge surface can ever trigger (`:application/

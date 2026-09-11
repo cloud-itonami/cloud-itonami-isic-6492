@@ -174,17 +174,17 @@ its own capability lib.
 
 | File | Role |
 |---|---|
-| `src/credit/store.cljc` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + loan-disbursement history. No dynamically-filed sub-record -- disbursement acts directly on a pre-seeded application, the same simpler shape `casualty.store`'s/`reinsurance.store`'s `:*/bind` ops use |
-| `src/credit/registry.cljc` | Loan-disbursement draft records, plus `compute-debt-to-income-ratio` (a real, simplified affordability formula) and `affordability-ceiling` (0.43, mirroring the U.S. Ability-to-Repay/Qualified Mortgage rule's general qualifying threshold) -- see docstrings for what neither models |
-| `src/credit/facts.cljc` | Per-jurisdiction truth-in-lending disclosure catalog with an official spec-basis citation per entry, honest coverage reporting |
-| `src/credit/creditllm.cljc` | **Credit-LLM Advisor** -- `mock-advisor` ‖ `llm-advisor`; intake/assessment/creditworthiness-screening/approval/disbursement proposals |
-| `src/credit/governor.cljc` | **Credit Governor** -- 4 HARD checks (spec-basis · evidence-incomplete · application-not-approved · affordability-exceeded, a pure ground-truth recompute needing no proposal/stored-verdict inspection) + double-disbursement guard + 1 soft (confidence/actuation gate) |
-| `src/credit/kernels/gate.kotoba` | **The decision core, and what runs.** Governor verdict, phase table, confidence floor and affordability ceiling, in Kotoba. Compiled by `clojure -M:dev:test:gen` to `src/credit/kernels/gate_kir.cljc` (generated, do not edit) |
-| `src/credit/kernels/gate.cljc` | The host half that is not a decision: builds the proposal record the core declares, hands back an integer. Holds no rule and no threshold |
-| `src/credit/kernels/kotoba_oracle.cljc` | The seam — id → shipped artifact → execute. A missing core throws; there is no fallback |
-| `src/credit/phase.cljc` | **Phase 0→3** -- read-only → assisted intake → assisted assess → supervised (disbursement always human; application intake is the ONLY auto-eligible op, no capital risk) |
-| `src/credit/operation.cljc` | **OperationActor** -- langgraph-clj StateGraph |
-| `src/credit/sim.cljc` | demo driver |
+| `src/credit/store.cljk` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + loan-disbursement history. No dynamically-filed sub-record -- disbursement acts directly on a pre-seeded application, the same simpler shape `casualty.store`'s/`reinsurance.store`'s `:*/bind` ops use |
+| `src/credit/registry.cljk` | Loan-disbursement draft records, plus `compute-debt-to-income-ratio` (a real, simplified affordability formula) and `affordability-ceiling` (0.43, mirroring the U.S. Ability-to-Repay/Qualified Mortgage rule's general qualifying threshold) -- see docstrings for what neither models |
+| `src/credit/facts.cljk` | Per-jurisdiction truth-in-lending disclosure catalog with an official spec-basis citation per entry, honest coverage reporting |
+| `src/credit/creditllm.cljk` | **Credit-LLM Advisor** -- `mock-advisor` ‖ `llm-advisor`; intake/assessment/creditworthiness-screening/approval/disbursement proposals |
+| `src/credit/governor.cljk` | **Credit Governor** -- 4 HARD checks (spec-basis · evidence-incomplete · application-not-approved · affordability-exceeded, a pure ground-truth recompute needing no proposal/stored-verdict inspection) + double-disbursement guard + 1 soft (confidence/actuation gate) |
+| `src/credit/kernels/gate.kotoba` | **The decision core, and what runs.** Governor verdict, phase table, confidence floor and affordability ceiling, in Kotoba. Compiled by `clojure -M:dev:test:gen` to `src/credit/kernels/gate_kir.cljk` (generated, do not edit) |
+| `src/credit/kernels/gate.cljk` | The host half that is not a decision: builds the proposal record the core declares, hands back an integer. Holds no rule and no threshold |
+| `src/credit/kernels/kotoba_oracle.cljk` | The seam — id → shipped artifact → execute. A missing core throws; there is no fallback |
+| `src/credit/phase.cljk` | **Phase 0→3** -- read-only → assisted intake → assisted assess → supervised (disbursement always human; application intake is the ONLY auto-eligible op, no capital risk) |
+| `src/credit/operation.cljk` | **OperationActor** -- langgraph-clj StateGraph |
+| `src/credit/sim.cljk` | demo driver |
 | `test/credit/*_test.clj` | governor contract · phase invariants · store parity · registry conformance · facts coverage |
 
 ## Business-process coverage (honest)

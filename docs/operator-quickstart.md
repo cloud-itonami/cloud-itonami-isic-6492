@@ -30,7 +30,7 @@ Walk one complete loan-application lifecycle (intake → assessment → screenin
 clojure -M:dev:run
 ```
 
-This invokes the demo driver (`src/credit/sim.cljc`), which seeds a test application and runs it through the OperationActor under the Credit Governor. Output logs each phase transition and governor decision.
+This invokes the demo driver (`src/credit/sim.cljk`), which seeds a test application and runs it through the OperationActor under the Credit Governor. Output logs each phase transition and governor decision.
 
 ## Run tests
 
@@ -61,7 +61,7 @@ clojure -M:lint
 ## Core modules
 
 ### Credit Governor
-**Location:** [`src/credit/governor.cljc`](../src/credit/governor.cljc)
+**Location:** [`src/credit/governor.cljk`](../src/credit/governor.cljk)
 
 The independent governance layer that enforces four hard-stop checks before any loan action:
 1. **spec-basis** — jurisdiction truth-in-lending requirement must cite an official source
@@ -69,10 +69,10 @@ The independent governance layer that enforces four hard-stop checks before any 
 3. **application-not-approved** — disbursement forbidden on unapproved applications
 4. **affordability-exceeded** — debt-to-income ratio recomputed fresh from the application; exceeding 0.43 (U.S. Qualified Mortgage ceiling) forces a hold
 
-The governor also prevents double-disbursement by checking the application's own status, and gates high-stakes actions (`:loan/disburse`) to human-only execution. Fabricated citations, incomplete evidence, or affordability violations force a hard hold with no override—audit every decision in [`src/credit/store.cljc`](../src/credit/store.cljc).
+The governor also prevents double-disbursement by checking the application's own status, and gates high-stakes actions (`:loan/disburse`) to human-only execution. Fabricated citations, incomplete evidence, or affordability violations force a hard hold with no override—audit every decision in [`src/credit/store.cljk`](../src/credit/store.cljk).
 
 ### Phase State Machine
-**Location:** `src/credit/phase.cljc`
+**Location:** `src/credit/phase.cljk`
 
 Defines four phases:
 - **Phase 0:** read-only — application data locked after intake
@@ -83,12 +83,12 @@ Defines four phases:
 Only application intake (`:application/intake`) is auto-eligible; all other high-stakes operations require human sign-off.
 
 ### Store & Audit Ledger
-**Location:** `src/credit/store.cljc`
+**Location:** `src/credit/store.cljk`
 
 Pluggable store protocol supporting in-memory (`MemStore`) or Datomic (`DatomicStore`) backends. All operations append to an immutable audit ledger; disbursement history is separate from the application record.
 
 ### Loan Registry
-**Location:** `src/credit/registry.cljc`
+**Location:** `src/credit/registry.cljk`
 
 - `compute-debt-to-income-ratio` — simplified affordability formula (total debt / gross income)
 - `affordability-ceiling` — 0.43, mirroring U.S. Ability-to-Repay rule
@@ -97,12 +97,12 @@ Pluggable store protocol supporting in-memory (`MemStore`) or Datomic (`DatomicS
 See the module docstring for what this simplified formula does *not* model (credit scores, collateral analysis, payment history).
 
 ### Jurisdiction Facts Catalog
-**Location:** `src/credit/facts.cljc`
+**Location:** `src/credit/facts.cljk`
 
 Truth-in-lending disclosure requirements by jurisdiction, each citing an official spec-basis source. Currently seeded with 4 jurisdictions (JPN, USA, GBR, DEU). Adding a jurisdiction is additive: one map entry with a real official citation, never fabricated.
 
 ### OperationActor
-**Location:** `src/credit/operation.cljc`
+**Location:** `src/credit/operation.cljk`
 
 The langgraph-clj StateGraph that orchestrates intake → assessment → screening → approval → disbursement with supervised checkpoints and escalation to human review.
 

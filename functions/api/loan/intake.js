@@ -1,5 +1,5 @@
 // Thin routing shim — logic in
-// src/credit/edge/loan_endpoints.cljc, compiled by
+// src/credit/edge/loan_endpoints.cljk, compiled by
 // shadow-cljs :edge-api into functions/edge/loan-edge-core.js.
 // Regenerate with: npx shadow-cljs release edge-api
 

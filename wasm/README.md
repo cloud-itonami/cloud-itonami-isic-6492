@@ -5,7 +5,7 @@
 **Nothing in this directory decides anything in production.**
 
 The credit governor's rules live in `src/credit/kernels/gate.kotoba`,
-compiled to KIR, shipped as `src/credit/kernels/gate_kir.cljc`, and
+compiled to KIR, shipped as `src/credit/kernels/gate_kir.cljk`, and
 executed by `credit.kernels.gate` through
 `credit.kernels.kotoba-oracle`. That is what `credit.governor/check` and
 `credit.phase/gate` decide by, on the JVM, under `cljs.main` and inside
@@ -17,9 +17,9 @@ JVM-only). They are reached only from tests:
 
 | file | reached by | authority |
 |---|---|---|
-| `credit_verdict.{kotoba,wasm}` | `test/wasm/credit_verdict_test.clj`, `credit.kernels.gate-kotoba` | no |
-| `credit_phase.{kotoba,wasm}` | `test/wasm/credit_phase_test.clj`, `credit.kernels.gate-kotoba` | no |
-| `affordability.{kotoba,wasm}` | `test/wasm/affordability_test.clj` | no |
+| `credit_verdict.{kotoba,wasm}` | `test/wasm/credit_verdict_test.cljk`, `credit.kernels.gate-kotoba` | no |
+| `credit_phase.{kotoba,wasm}` | `test/wasm/credit_phase_test.cljk`, `credit.kernels.gate-kotoba` | no |
+| `affordability.{kotoba,wasm}` | `test/wasm/affordability_test.cljk` | no |
 
 They are kept, not deleted, because a second implementation that agrees
 is worth having. Two gates keep them from drifting away silently:
@@ -39,9 +39,9 @@ and a legacy `.wasm` module cannot be asked for a threshold.
 `affordability.kotoba` is a port of `credit.registry/compute-debt-to-income-ratio`
 + `affordability-ceiling` (the 0.43 back-end debt-to-income ceiling, mirroring
 the U.S. Ability-to-Repay/Qualified Mortgage rule, Regulation Z 12 CFR
-§1026.43 — see `src/credit/registry.cljc`) into the minimal `.kotoba`
+§1026.43 — see `src/credit/registry.cljk`) into the minimal `.kotoba`
 language subset, compiled to a real WASM module via `kotoba wasm emit`, and
-hosted via `kototama.tender` (`test/wasm/affordability_test.clj`).
+hosted via `kototama.tender` (`test/wasm/affordability_test.cljk`).
 
 This is the first cloud-itonami actor logic proven through the
 `kotoba wasm emit` → `kototama.tender` pipeline — previously that pipeline
@@ -204,7 +204,7 @@ value: `10*disposition + reason`, unpacked by the host via `quot`/`rem`).
 See each file's own `ns` docstring for the exact memory-offset ABI.
 
 **Verified two ways**: (1) `clojure -M:test` — `test/wasm/
-credit_verdict_test.clj` and `test/wasm/credit_phase_test.clj` host the
+credit_verdict_test.clj` and `test/wasm/credit_phase_test.cljk` host the
 compiled `.wasm` via `kototama.tender` (same pattern as `wasm.
 affordability-test`), with every case copied verbatim from `credit.
 kernels.gate.cljc`'s own executable `battery` (52 cases: 21 verdict + 10
@@ -242,7 +242,7 @@ into the compiled WASM (not shown here) the same way a host would.
 
 ## `credit.kernels.gate-kotoba` — a verified drop-in function (2026-07-14, ADR-2607151500 addendum 4)
 
-`src/credit/kernels/gate_kotoba.clj` wires `credit_verdict.wasm`/
+`src/credit/kernels/gate_kotoba.cljk` wires `credit_verdict.wasm`/
 `credit_phase.wasm` up as `verdict-code`/`phase-disposition`/
 `phase-reason` — the SAME signatures as `credit.kernels.gate`'s own
 in-process functions, hosted via `kototama.tender` instead. A genuine
@@ -259,7 +259,7 @@ autonomously here (the same reasoning `kotoba-lang/kototama`'s own
 `prior-shortcut-kotoba` port applied to `kototama.unspsc.organism`'s
 call site).
 
-**Verified**: `test/credit/kernels/gate_kotoba_test.clj` calls BOTH
+**Verified**: `test/credit/kernels/gate_kotoba_test.cljk` calls BOTH
 `credit.kernels.gate`'s in-process functions and `gate-kotoba`'s
 WASM-backed ones with the exact same 52-case battery
 (`credit.kernels.gate.cljc`'s own `battery`) and asserts three-way

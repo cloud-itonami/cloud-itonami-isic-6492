@@ -5,7 +5,7 @@
   migration (V3 only gave it inbound CACAO verify + a caller allow-list
   -- `credit.edge.cacao`/`credit.edge.caller-allowlist`); this ns is the
   FIRST outbound identity this actor mints for itself, generated ONCE,
-  offline, via `scripts/generate-actor-identity.cljs` (an adapted,
+  offline, via `scripts/generate-actor-identity.cljk` (an adapted,
   algorithm-unchanged copy of `cloud-itonami-commitment-ledger`'s own
   script of the same name) and stored as the `ISIC6492_ACTOR_SEED`
   Cloudflare Pages secret + `ISIC6492_ACTOR_DID` public var on THIS
@@ -84,7 +84,7 @@
 #?(:cljs
    (defn import-signing-key
      "seed-b64 (standard base64, the 32-byte raw Ed25519 private seed
-     `scripts/generate-actor-identity.cljs` printed and
+     `scripts/generate-actor-identity.cljk` printed and
      `ISIC6492_ACTOR_SEED` stores), did (this actor's own did:key,
      `ISIC6492_ACTOR_DID`) -> promise-like of a CryptoKey usable for
      `js/crypto.subtle.sign`. Same JWK-reconstruction algorithm as

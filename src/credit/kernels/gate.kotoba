@@ -3,7 +3,7 @@
 ;; This file is not a copy of `credit/kernels/gate.cljc` kept honest by a
 ;; test. It is what that namespace RUNS: it is compiled to KIR by
 ;; `credit.kernels.kotoba-oracle-gen`, the KIR ships as
-;; `src/credit/kernels/gate_kir.cljc`, and `credit.kernels.gate` executes
+;; `src/credit/kernels/gate_kir.cljk`, and `credit.kernels.gate` executes
 ;; that artifact through `credit.kernels.kotoba-oracle`. Change a rule here
 ;; and regenerate, and the governor decides differently. Change a rule here
 ;; and DON'T regenerate, and `credit.kernels.kotoba-oracle-test` says so.

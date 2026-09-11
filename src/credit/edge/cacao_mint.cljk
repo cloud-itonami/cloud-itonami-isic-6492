@@ -15,7 +15,7 @@
   migration's Store (`credit.edge.kotobase-store`) is the first thing
   that needs one, to authenticate this actor's OWN writes/reads to its
   own kotobase.net graph. The identity is generated ONCE, offline, by
-  `scripts/generate-actor-identity.cljs` (adapted, unchanged algorithm,
+  `scripts/generate-actor-identity.cljk` (adapted, unchanged algorithm,
   from `cloud-itonami-commitment-ledger`'s own script of the same name)
   and stored as the `ISIC6492_ACTOR_SEED` Cloudflare Pages secret +
   `ISIC6492_ACTOR_DID` public var; at request time `credit.edge.
