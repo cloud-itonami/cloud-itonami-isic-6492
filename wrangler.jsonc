@@ -11,7 +11,7 @@
   ],
   "vars": {
     // Public (not secret -- it IS the public key, base58-encoded).
-    // Regenerate with scripts/generate-actor-identity.cljs.
+    // Regenerate with scripts/generate-actor-identity.cljk.
     // ISIC6492_ACTOR_SEED (the private key material) is a Cloudflare
     // Pages SECRET (`wrangler pages secret put ISIC6492_ACTOR_SEED
     // --project-name cloud-itonami-isic-6492`), never placed here.

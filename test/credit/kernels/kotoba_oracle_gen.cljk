@@ -40,7 +40,7 @@
   "Oracle id -> the namespace that carries its compiled KIR, and the file
   that namespace lives in."
   {:gate {:ns 'credit.kernels.gate-kir
-          :path "src/credit/kernels/gate_kir.cljc"}})
+          :path "src/credit/kernels/gate_kir.cljk"}})
 
 (defn compile-text
   "Compile `.kotoba` source TEXT to KIR. The one call the drift gate also

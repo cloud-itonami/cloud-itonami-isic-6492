@@ -21,11 +21,11 @@ Same `store-with-api` + `chain` pattern; SIMPLER than commitment-ledger's counte
 
 ### 3. FIRST self-mint outbound identity for this actor
 
-Unlike commitment-ledger (which already had one for its own isic-6492 calls, ADR-2607242200), isic-6492 had NO self-mint identity before this migration (V3 only added inbound CACAO verify + a caller allow-list). Generated ONE new Ed25519 keypair via `scripts/generate-actor-identity.cljs` (adapted, algorithm-unchanged, from commitment-ledger's own script), stored as the `ISIC6492_ACTOR_SEED` Cloudflare Pages secret + `ISIC6492_ACTOR_DID` public var on this actor's OWN Cloudflare Pages project.
+Unlike commitment-ledger (which already had one for its own isic-6492 calls, ADR-2607242200), isic-6492 had NO self-mint identity before this migration (V3 only added inbound CACAO verify + a caller allow-list). Generated ONE new Ed25519 keypair via `scripts/generate-actor-identity.cljk` (adapted, algorithm-unchanged, from commitment-ledger's own script), stored as the `ISIC6492_ACTOR_SEED` Cloudflare Pages secret + `ISIC6492_ACTOR_DID` public var on this actor's OWN Cloudflare Pages project.
 
 ### 4. Numeric identity-attribute fix
 
-`credit.store`'s schema marks `:ledger/seq`/`:disbursement/seq` `:db.unique/identity`, both previously `(count ...)` ints. Fixed the same way as commitment-ledger (str-wrap writes, `parse-seq-num` reads). Defensive: this actor's live HTTP surface never actually exercises `append-ledger!`/`:loan/mark-disbursed` (only `:application/intake` is exposed), but the fix is unconditional per the task's own requirement and is regression-tested (`test/credit/store_numeric_identity_test.cljc`, verified to genuinely fail before the fix, matching commitment-ledger's own verification method).
+`credit.store`'s schema marks `:ledger/seq`/`:disbursement/seq` `:db.unique/identity`, both previously `(count ...)` ints. Fixed the same way as commitment-ledger (str-wrap writes, `parse-seq-num` reads). Defensive: this actor's live HTTP surface never actually exercises `append-ledger!`/`:loan/mark-disbursed` (only `:application/intake` is exposed), but the fix is unconditional per the task's own requirement and is regression-tested (`test/credit/store_numeric_identity_test.cljk`, verified to genuinely fail before the fix, matching commitment-ledger's own verification method).
 
 ### 5. Same 3 confirmed-live CACAO wire-format bugs, found first in commitment-ledger, independently reproduced and fixed here
 

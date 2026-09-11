@@ -77,7 +77,7 @@
                       ;; own runtime code has no wasm/host dependency.
                       io.github.kotoba-lang/kototama
                       {:local/root "../../kotoba-lang/kototama"}
-                      ;; Produces `src/credit/kernels/gate_kir.cljc` (see
+                      ;; Produces `src/credit/kernels/gate_kir.cljk` (see
                       ;; the :gen alias) and re-produces it in
                       ;; `credit.kernels.kotoba-oracle-test` to prove what
                       ;; shipped is what the source says. Test-only on

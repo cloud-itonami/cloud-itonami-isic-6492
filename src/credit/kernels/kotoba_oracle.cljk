@@ -2,7 +2,7 @@
   "Runs the shipped decision core.
 
   `src/credit/kernels/gate.kotoba` holds the credit governor's rules;
-  `src/credit/kernels/gate_kir.cljc` is what was compiled from it and what
+  `src/credit/kernels/gate_kir.cljk` is what was compiled from it and what
   ships. This namespace is the seam, and it is deliberately thin: it
   resolves an artifact, executes an export, and decides nothing.
 

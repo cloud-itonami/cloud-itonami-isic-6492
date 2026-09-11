@@ -7,7 +7,7 @@
 ;; (root CLAUDE.md) -- ported from the original wasm/verify_node.mjs.
 ;;
 ;; Why this exists: kototama.tender (JVM/Chicory, see
-;; test/wasm/affordability_test.clj) is the more mature host, but the
+;; test/wasm/affordability_test.cljk) is the more mature host, but the
 ;; murakumo fleet's Mac-mini nodes have no JVM installed (only the pinned
 ;; Rust kotoba/kotoba-server binaries + a native XMRig miner) -- confirmed
 ;; directly, 2026-07-07: `java -version` on asher/naphtali/judah/zebulun/
