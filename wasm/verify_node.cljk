@@ -47,9 +47,9 @@
 (defn- arr [value] (array-seq (or value #js [])))
 
 (defn- script-path []
-  (or (some #(when (str/ends-with? (str %) "verify_node.cljs") %) (arr argv))
+  (or (some #(when (str/ends-with? (str %) "verify_node.cljk") %) (arr argv))
       (aget argv 1)
-      "verify_node.cljs"))
+      "verify_node.cljk"))
 
 (defn- cli-args []
   (let [items (vec (arr argv))
