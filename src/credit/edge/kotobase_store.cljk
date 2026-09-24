@@ -24,7 +24,7 @@
   store` -- need ZERO changes: only the bottom-of-file `on-request-*`
   entry points swap `(kv/cloudflare-kv-store env)` for `(kotobase-kv-
   store-from-env! env)`."
-  (:require #?(:clj  [clojure.edn :as edn]
+  (:require #?(:clj  [kotoba.lang.edn :as edn]
                :cljs [cljs.reader :as edn])
             [credit.edge.kotobase-http :as khttp]
             [credit.edge.kotobase-identity :as identity]
