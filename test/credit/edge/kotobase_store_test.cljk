@@ -10,7 +10,7 @@
   `mint-cacao!` here a plain counting stub not real CACAO crypto)."
   (:require [clojure.edn :as edn]
             [kotoba.lang.text :as str]
-            [clojure.test :refer [deftest is testing]]
+            [kotoba.test :refer [deftest is testing]]
             [credit.edge.await-helper :refer [awaiting sequentially]]
             [credit.edge.kotobase-http :as khttp]
             [credit.edge.kotobase-store :as ks]

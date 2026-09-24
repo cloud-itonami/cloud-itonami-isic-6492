@@ -26,7 +26,7 @@
   today's core, not of the seam.
 
   Runs under both hosts; `credit.portable-cljs-test-runner` includes it."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.kernels.gate :as gate]
             [credit.kernels.kotoba-oracle :as oracle]))
 

@@ -8,7 +8,7 @@
   Both protocol methods return promise-like (`MemKVStore` wraps its
   results in `pcompat/resolved`), so every call is threaded through
   `await-helper` rather than read where it stands -- see that ns."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [credit.edge.await-helper :refer [awaiting]]
             [credit.edge.kv-store :as kv]
             [credit.edge.pcompat :as pc]))

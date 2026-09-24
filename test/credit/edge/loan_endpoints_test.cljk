@@ -10,7 +10,7 @@
   Both handlers and both KV methods return promise-like, so every call is
   threaded through `await-helper` -- see that ns for why reading them
   where they stand passed on the JVM and reported nil on ClojureScript."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.edge.auth :as auth]
             [credit.edge.await-helper :refer [awaiting]]
             [credit.edge.caller-allowlist :as allowlist]

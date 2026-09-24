@@ -1,5 +1,5 @@
 (ns credit.registry-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [credit.registry :as r]))
 
 ;; ----------------------------- compute-debt-to-income-ratio -----------------------------

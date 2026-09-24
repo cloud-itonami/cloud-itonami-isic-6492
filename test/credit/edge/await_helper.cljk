@@ -19,7 +19,7 @@
   Nothing here is ClojureScript-specific in its MEANING. On `:clj` both
   functions collapse to direct calls, because `pcompat/then` is direct
   there; the JVM run is byte-for-byte the same work it always did."
-  (:require #?(:clj  [clojure.test :as t]
+  (:require #?(:clj  [kotoba.test :as t]
                :cljs [cljs.test :as t :include-macros true])
             [credit.edge.pcompat :as pc]))
 

@@ -18,7 +18,7 @@
   transact directly onto `conn`, assuming a synchronous db-api, and are
   never invoked against the remote/async db-api in this actor's design;
   see `DatomicStore`'s own docstring)."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.store :as store]
             [langchain.db :as d]))
 

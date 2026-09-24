@@ -33,7 +33,7 @@
   guards is portable and runs everywhere this actor decides."
   (:require [clojure.java.io :as io]
             [kotoba.lang.text :as str]
-            [clojure.test :refer [deftest is testing]]
+            [kotoba.test :refer [deftest is testing]]
             [clojure.walk :as walk]
             [credit.governor :as governor]
             [credit.kernels.gate :as gate]

@@ -13,7 +13,7 @@
   checked against the AUTHORITY -- and that is the reading to keep: the
   wasm modules are non-authoritative, and agreement is what makes them
   worth keeping rather than what makes them correct."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.kernels.gate :as gate]
             [credit.kernels.gate-kotoba :as gate-kotoba]))
 

@@ -3,7 +3,7 @@
   member check -- the HARD, edge-layer-specific gate this repo's
   `docs/adr/0002-http-edge-loan-intake.md` adds on top of (never
   instead of) CACAO verification. Pure, no crypto involved."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.edge.caller-allowlist :as allowlist]))
 
 (deftest parse-allowlist-splits-and-trims
