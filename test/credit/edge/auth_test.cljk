@@ -4,7 +4,7 @@
   crypto anywhere in this test file, by design (see `credit.edge.auth`'s
   ns docstring for the same reasoning `commitledger.edge.auth-test`
   already documents for this fleet)."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.edge.auth :as auth]
             [credit.edge.await-helper :refer [awaiting]]
             [credit.edge.pcompat :as pc]))

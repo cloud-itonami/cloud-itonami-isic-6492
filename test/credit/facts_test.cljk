@@ -1,5 +1,5 @@
 (ns credit.facts-test
-  (:require [kotoba.lang.text] [clojure.test :refer [deftest is]]
+  (:require [kotoba.lang.text] [kotoba.test :refer [deftest is]]
             [credit.facts :as facts]))
 
 (deftest jpn-has-a-spec-basis

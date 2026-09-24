@@ -62,7 +62,7 @@
   says `\"type\": \"module\"`, which makes node read every emitted .js
   under target/node-out as ESM and die on Closure's `require`. The
   marker file scopes those back to CommonJS."
-  (:require [clojure.test :as t :refer [run-tests]]
+  (:require [kotoba.test :as t :refer [run-tests]]
             [credit.facts-test]
             [credit.governor-contract-test]
             [credit.kernels.gate-test]

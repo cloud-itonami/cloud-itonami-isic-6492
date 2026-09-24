@@ -14,7 +14,7 @@
      fail-closed treatment of out-of-range confidence, and the
      debt-to-income affordability ceiling boundary, exercised through
      the real `credit.governor/check` façade."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [credit.governor :as governor]
             [credit.kernels.gate :as gate]
             [credit.registry :as registry]
