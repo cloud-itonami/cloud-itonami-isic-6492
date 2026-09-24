@@ -13,8 +13,8 @@
   `credit.kernels.kotoba-oracle`'s docstring gives: this actor decides
   inside a Cloudflare Worker and under `cljs.main`, and neither has a
   classpath to read a resource from."
-  (:require [clojure.java.io :as io]
-            [clojure.pprint :as pp]
+  (:require [kotoba.io :as io]
+            [kotoba.pprint :as pp]
             [kotoba.compiler.core :as compiler])
   (:gen-class))
 
