@@ -6,6 +6,10 @@
  ;; inside the monorepo checkout — a standalone fork should override them
  ;; with git coordinates.
  :deps {
+        ;; kotoba.robotics.process: the process-physics solvers and probe this
+        ;; repo's physics.edn runs on (physical-AI bot, scripts/physical-ai-bots).
+        io.github.kotoba-lang/robotics {:local/root "../../kotoba-lang/robotics"}
+
         ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
         ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
         ;; this repo silently rides whatever a sibling happens to name.
@@ -37,7 +41,19 @@
         {:git/url "https://github.com/kotoba-lang/osaho.git"
          :git/sha "d58972da61758584a5bec0e863bcb3ea6fdd6c64"}}
  :aliases
- {;; offline workspace dev -- pin transitive langchain-clj to local checkout.
+ {
+  ;; kbb -M:physics -> the physical-AI bot's measurement: runs physics.edn on
+  ;; kotoba.robotics.process and prints one probe map. Exit 2 = could not measure.
+  :physics {:main-opts ["-m" "kotoba.robotics.process.probe"]}
+  ;; kbb -M:physai-test -> test/'s .cljk on kbb's runner (the bot's test count;
+  ;; a .kotoba vertical's own :test may refuse kbb on purpose).
+  ;; -n: the portable namespaces credit.portable-cljs-test-runner runs, plus the physics test.
+  ;; test/wasm/ and test/credit/kernels/{gate_kotoba*,kotoba_oracle_test} host .wasm through
+  ;; kototama.tender (Chicory) -- JVM-only by design, run by the :test alias.
+  :physai-test {:extra-paths ["test" "test-physai"]
+                :main-opts ["-m" "cognitect.test-runner" "-d" "test/credit" "-d" "test-physai"
+                            "-n" "credit.facts-test" "-n" "credit.governor-contract-test" "-n" "credit.kernels.gate-test" "-n" "credit.kernels.kotoba-oracle-portable-test" "-n" "credit.phase-test" "-n" "credit.registry-test" "-n" "credit.edge.auth-test" "-n" "credit.edge.caller-allowlist-test" "-n" "credit.edge.kotobase-store-test" "-n" "credit.edge.kv-store-test" "-n" "credit.edge.loan-endpoints-test" "-n" "credit.store-contract-test" "-n" "credit.store-numeric-identity-test" "-n" "credit.physics-spec-test"]}
+;; offline workspace dev -- pin transitive langchain-clj to local checkout.
   ;; TWO distinct maven coordinates resolve to this same physical repo in
   ;; this dep graph: io.github.com-junkawasaki/langchain-clj AND
   ;; io.github.kotoba-lang/langchain (langgraph-clj's OWN declared
