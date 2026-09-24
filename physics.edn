@@ -1,0 +1,35 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:dev:physics` runs it.
+;;
+;; README "Robotics premise": for other credit granting (ISIC 6492) a
+;; document-intake courier robot moves physical loan-application documents,
+;; gated by the independent Credit Governor. Physical work modelled here:
+;; the courier carrying an intake tote from the mailroom to the underwriting
+;; desk (the leg length sets how far one courier can serve), and its arm
+;; loading an application bundle into the scanner's document hopper.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isic-6492"
+ :cases
+ [{:id :intake-tote-to-underwriting
+   :kind :transport
+   :procedure "courier robot carries a tote of loan-application documents from the mailroom to the underwriting desk"
+   :params {:mass-kg 35.0 :payload-kg 8.0 :v-max-mps 1.2 :a-max-mps2 0.5
+            :brake-decel-mps2 1.0 :drive-force-n 120.0 :crr 0.015
+            :cog-height-m 0.35 :support-half-length-m 0.25 :payload-cog-height-m 0.70
+            :max-time-s 1800.0}
+   :sweep {:param :distance-m :values [50.0 100.0 200.0 300.0 400.0]}
+   :quantity :cycle-time-s
+   :limit {:max 240.0 :basis "estimate: an intake tote should reach underwriting within 4 minutes of arrival to meet the same-day decision target"}
+   :boundary {:lo 20.0 :hi 800.0}}
+  {:id :bundle-to-scanner-hopper
+   :kind :manipulator
+   :procedure "courier arm lifts an application bundle from the tote and squares it into the document scanner's input hopper"
+   :params {:l1-m 0.45 :l2-m 0.40 :m1-kg 3.5 :m2-kg 2.5
+            :from [0.45 -0.15] :to [0.30 0.35] :duration-s 1.5 :steps 500}
+   :sweep {:param :payload-kg :values [0.5 1.0 2.0 3.0 5.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 35.0 :basis "estimate: continuous shoulder torque of a ~3 kg-payload light arm class"}
+   :boundary {:lo 0.1 :hi 20.0}}]}
