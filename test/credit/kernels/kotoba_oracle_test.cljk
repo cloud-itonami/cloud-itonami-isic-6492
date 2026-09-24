@@ -31,10 +31,10 @@
 
   JVM-only: it compiles `.kotoba` and reads files. The shipped artifact it
   guards is portable and runs everywhere this actor decides."
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.lang.text :as str]
             [kotoba.test :refer [deftest is testing]]
-            [clojure.walk :as walk]
+            [kotoba.lang.coll :as walk]
             [credit.governor :as governor]
             [credit.kernels.gate :as gate]
             [credit.kernels.kotoba-oracle :as oracle]
@@ -275,6 +275,6 @@
   ;; If the generator wrote somewhere other than the namespace the oracle
   ;; requires, regeneration would look like it worked and change nothing.
   (doseq [[id {:keys [path]}] gen/artifact-ns]
-    (is (.exists (io/file path)) (str "no artifact file for " id " at " path))
+    (is (io/exists? (io/file path)) (str "no artifact file for " id " at " path))
     (is (str/includes? (slurp path) "GENERATED")
         (str path " lost its generated-file header"))))

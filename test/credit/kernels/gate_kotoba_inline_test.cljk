@@ -41,9 +41,9 @@
   deliberately not part of the portable `.cljc` suite
   `credit.portable-cljs-test-runner` runs."
   (:require [clojure.java.io :as io]
-            [clojure.set :as set]
+            [kotoba.lang.coll :as set]
             [kotoba.test :refer [deftest is testing]]
-            [clojure.walk :as walk]
+            [kotoba.lang.coll :as walk]
             [credit.kernels.gate :as gate])
   (:import (java.io PushbackReader)))
 
