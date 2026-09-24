@@ -8,7 +8,7 @@
   test` (sibling actor, same fleet) -- see that ns's docstring for the
   full platform-split reasoning (`:clj`-only, `resolved-mock-http-fn`,
   `mint-cacao!` here a plain counting stub not real CACAO crypto)."
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.lang.edn :as edn]
             [kotoba.lang.text :as str]
             [kotoba.test :refer [deftest is testing]]
             [credit.edge.await-helper :refer [awaiting sequentially]]
