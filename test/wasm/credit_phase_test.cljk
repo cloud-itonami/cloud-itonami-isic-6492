@@ -14,7 +14,7 @@
   fixed offsets before calling main() -- see wasm/credit_phase.kotoba's
   ns docstring for the offset layout and the disposition/reason packing
   (10*disposition + reason)."
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is testing]]
             [kototama.contract :as contract]
             [kototama.tender :as tender]))

@@ -40,7 +40,7 @@
   JVM-only (reads its sources through `java.io`), like that test —
   deliberately not part of the portable `.cljc` suite
   `credit.portable-cljs-test-runner` runs."
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.lang.coll :as set]
             [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.coll :as walk]
@@ -81,7 +81,7 @@
 
 (defn- kotoba-source [path]
   (let [f (io/file path)]
-    (when-not (.exists f)
+    (when-not (io/exists? f)
       (throw (ex-info "`.kotoba` source missing -- moved, or the test's cwd is not the repo root"
                       {:path path})))
     f))
