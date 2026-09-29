@@ -102,7 +102,7 @@ bin/kotoba-clj wasm emit ../../cloud-itonami/cloud-itonami-isic-6492/wasm/afford
 `actor-host.js` (plain Node.js, no JVM, run through `nbb` — ClojureScript
 without a build step). This started as a plain `.mjs` script; per this
 monorepo's `kotoba wasm > clojurewasm > cljs > nbb > jvm` runtime priority
-(root CLAUDE.md), it's `.cljs`/`nbb` instead of raw JavaScript everywhere
+(root AGENTS.md), it's `.cljs`/`nbb` instead of raw JavaScript everywhere
 else in the codebase does the same kind of lightweight Node scripting
 (`svgraph/bin/svgraph.cljs`, `kototama/web/generate.cljs`, etc.). Reuses
 the pattern ADR-2607072530 established for `cloud-itonami-isic-6511`,
