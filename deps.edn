@@ -84,8 +84,9 @@
         ;; interpreter reading a shape its emitter did not write is exactly
         ;; the failure the artifact was supposed to remove.
         io.github.kotoba-lang/osaho
-        {:git/url "https://github.com/kotoba-lang/osaho.git"
-         :git/sha "d58972da61758584a5bec0e863bcb3ea6fdd6c64"}}
+        {:git/url "https://github.com/kotoba-lang/kotoba.git"
+         :git/sha "38654600c00caea2caec9ec0650625f2f6a69378"
+         :deps/root "lib/kotoba.osaho"}}
  :aliases
  {
   ;; kbb -M:physics -> the physical-AI bot's measurement: runs physics.edn on
@@ -112,7 +113,7 @@
   :dev {:override-deps
         {
          io.github.kotoba-lang/langchain
-         {:local/root "../../kotoba-lang/langchain"}}}
+        {:local/root "../../kotoba-lang/kotoba/lib/kotoba.langchain"}}}
   ;; kbb -M:dev:run  -> drive the demo through one OperationActor
   :run {:main-opts ["-m" "credit.sim"]}
   ;; kbb -M:dev:render-html [out-file] -> regenerate
@@ -139,7 +140,7 @@
                       ;; build (see wasm/README.md) -- test-only, the actor's
                       ;; own runtime code has no wasm/host dependency.
                       io.github.kotoba-lang/kototama
-                      {:local/root "../../kotoba-lang/kototama"}
+        {:local/root "../../kotoba-lang/kotoba/lib/kotoba.kototama"}
                       ;; Produces `src/credit/kernels/gate_kir.cljk` (see
                       ;; the :gen alias) and re-produces it in
                       ;; `credit.kernels.kotoba-oracle-test` to prove what
